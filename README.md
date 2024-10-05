@@ -15,6 +15,10 @@ Este projeto é uma aplicação web interativa criada com **Streamlit** que perm
 - **Pandas**: Para manipulação de dados.
 - **Matplotlib**: Para geração de gráficos.
 
+## Fluxograma
+
+![Fluxograma do Processo](Fluxograma.jpg)
+
 ##  Deploy na Streamlit Cloud
 Este projeto está hospedado gratuitamente no Streamlit Cloud. Você pode acessar a versão online diretamente no seguinte link:
 
