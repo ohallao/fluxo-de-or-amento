@@ -21,3 +21,14 @@ Este projeto está hospedado gratuitamente no Streamlit Cloud. Você pode acessa
 Acessar Aplicativo Budget Flow 
 
 https://fluxo-de-orcamento.streamlit.app/
+
+## Futuras Atualizações
+
+Aqui estão algumas melhorias e funcionalidades que planejo implementar nas próximas versões:
+
+1. **Exportação de Dados**: Opção para exportar os resultados do orçamento (mensal e anual) em formato CSV ou Excel.
+2. **Suporte para Multimoedas**: Adicionar a funcionalidade para trabalhar com múltiplas moedas e taxas de câmbio.
+3. **Dashboard Customizável**: Permitir que o usuário personalize quais gráficos e informações são exibidos no painel principal.
+4. **Alertas e Recomendações**: Implementar alertas quando o orçamento mensal estiver fora do planejado e sugerir ajustes para melhor controle financeiro.
+5. **Integração com APIs de Investimentos**: Conectar com APIs externas para obter dados de investimentos em tempo real (ações, CDB, poupança, etc.).
+6. **Relatórios Automáticos**: Geração de relatórios automáticos mensais e anuais com análise detalhada de despesas e receitas.
