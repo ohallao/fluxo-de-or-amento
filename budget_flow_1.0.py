@@ -10,9 +10,13 @@ Original file is located at
 import streamlit as st
 import pandas as pd
 import matplotlib.pyplot as plt
+import plotly.express as px
 
 # Título do App
 st.title('Budget Flow - Projeção Mensal e Anual')
+
+# Meses do Ano
+meses = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro']
 
 # Seções do App
 st.header('Insira seus Dados')
@@ -78,42 +82,34 @@ def calcular_total(categoria, is_anual=False):
 # Captura os dados do usuário
 categorias = inserir_dados_streamlit()
 
-# Calcular os totais por categoria
+# Seleção de Mês
+mes_selecionado = st.selectbox("Selecione o mês para ver os dados detalhados", meses)
+
+# Exibir dados detalhados do mês
+st.header(f'Dados Detalhados de {mes_selecionado}')
 totais_mensais = {cat: calcular_total(cat) for cat in categorias}
-totais_anuais = {cat: calcular_total(cat, is_anual=True) for cat in categorias}
+st.write(f"Receitas: R$ {totais_mensais['Receitas']}")
+for categoria in categorias:
+    if categoria != 'Receitas':
+        st.write(f"{categoria}: R$ {totais_mensais[categoria]}")
 
-# Calcular o fluxo de caixa
-fluxo_caixa_mensal = totais_mensais["Receitas"] - sum(totais_mensais[cat] for cat in categorias if cat != "Receitas")
-fluxo_caixa_anual = totais_anuais["Receitas"] - sum(totais_anuais[cat] for cat in categorias if cat != "Receitas")
-
-# Personalização do Dashboard
-st.header('Personalizar Dashboard')
-graficos_selecionados = st.multiselect(
-    "Escolha os gráficos que deseja ver:",
-    ['Resumo Mensal', 'Resumo Anual', 'Gráfico de Despesas Mensais', 'Gráfico de Despesas Anuais']
+# Gráfico Interativo de Porcentagens (Pie Chart) para o Mês Selecionado
+st.subheader('Distribuição de Receitas e Despesas')
+fig_pie = px.pie(
+    names=["Receitas", "Despesas Fixas", "Despesas Variáveis", "Impostos", "Investimentos"],
+    values=[totais_mensais['Receitas'], totais_mensais['Despesas Fixas'], totais_mensais['Despesas Variáveis'], totais_mensais['Impostos'], totais_mensais['Investimentos']],
+    title=f"Porcentagem de Receitas e Despesas em {mes_selecionado}"
 )
+st.plotly_chart(fig_pie)
 
-# Exibir resultados de acordo com a seleção
-if 'Resumo Mensal' in graficos_selecionados:
-    st.subheader('Resumo Mensal')
-    st.write(f"Receitas Mensais: R$ {totais_mensais['Receitas']}")
-    st.write(f"Fluxo de Caixa Mensal: R$ {fluxo_caixa_mensal}")
+# Gráfico de Linha Anual para Receitas e Despesas
+st.subheader('Gráfico Anual')
+dados_anuais = {
+    "Meses": meses,
+    "Receitas": [totais_mensais["Receitas"] for _ in meses],  # Você pode ajustar esses valores conforme seus dados
+    "Despesas": [sum(totais_mensais[cat] for cat in categorias if cat != "Receitas") for _ in meses]  # Sumariza todas as despesas
+}
 
-if 'Resumo Anual' in graficos_selecionados:
-    st.subheader('Resumo Anual')
-    st.write(f"Receitas Anuais: R$ {totais_anuais['Receitas']}")
-    st.write(f"Fluxo de Caixa Anual: R$ {fluxo_caixa_anual}")
-
-if 'Gráfico de Despesas Mensais' in graficos_selecionados:
-    st.subheader('Gráfico de Despesas Mensais')
-    fig, ax = plt.subplots()
-    ax.bar(categorias.keys(), totais_mensais.values(), color="lightcoral")
-    ax.set_ylabel("Valor em R$")
-    st.pyplot(fig)
-
-if 'Gráfico de Despesas Anuais' in graficos_selecionados:
-    st.subheader('Gráfico de Despesas Anuais')
-    fig, ax = plt.subplots()
-    ax.bar(categorias.keys(), totais_anuais.values(), color="skyblue")
-    ax.set_ylabel("Valor em R$")
-    st.pyplot(fig)
+df_anuais = pd.DataFrame(dados_anuais)
+fig_linha = px.line(df_anuais, x="Meses", y=["Receitas", "Despesas"], title="Receitas e Despesas Anuais")
+st.plotly_chart(fig_linha)
