@@ -15,15 +15,28 @@ import plotly.express as px
 def gerar_dados_exemplo():
     meses = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 
              'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro']
-    dados = {mes: {"Receitas": 0, "Despesas Fixas": 0, "Despesas Variáveis": 0, "Impostos": 0, "Investimentos": 0} for mes in meses}
+    dados = {mes: {
+        "Receitas": {}, 
+        "Despesas Fixas": {}, 
+        "Despesas Variáveis": {}, 
+        "Impostos": {}, 
+        "Investimentos": {}
+        } for mes in meses}
     return dados
 
-# Função para calcular totais mensais e fluxo de caixa
+# Função para calcular o total de uma categoria
+def calcular_total_categoria(categoria):
+    return sum(categoria.values())
+
+# Função para calcular o fluxo de caixa
 def calcular_fluxo_caixa(dados_mensais):
-    receitas = dados_mensais['Receitas']
-    despesas = dados_mensais['Despesas Fixas'] + dados_mensais['Despesas Variáveis'] + dados_mensais['Impostos'] + dados_mensais['Investimentos']
-    fluxo_caixa = receitas - despesas
-    return receitas, despesas, fluxo_caixa
+    total_receitas = calcular_total_categoria(dados_mensais['Receitas'])
+    total_despesas = (calcular_total_categoria(dados_mensais['Despesas Fixas']) +
+                      calcular_total_categoria(dados_mensais['Despesas Variáveis']) +
+                      calcular_total_categoria(dados_mensais['Impostos']) +
+                      calcular_total_categoria(dados_mensais['Investimentos']))
+    fluxo_caixa = total_receitas - total_despesas
+    return total_receitas, total_despesas, fluxo_caixa
 
 # Dados financeiros para cada mês
 dados_por_mes = gerar_dados_exemplo()
@@ -57,12 +70,45 @@ mes_selecionado = st.selectbox("Selecione o mês", df_resumo['Meses'])
 st.subheader(f'Detalhes de {mes_selecionado}')
 dados_mes_selecionado = dados_por_mes[mes_selecionado]
 
-# Exibir dados detalhados e permitir que o usuário altere
-dados_mes_selecionado['Receitas'] = st.number_input("Receitas", value=dados_mes_selecionado['Receitas'])
-dados_mes_selecionado['Despesas Fixas'] = st.number_input("Despesas Fixas", value=dados_mes_selecionado['Despesas Fixas'])
-dados_mes_selecionado['Despesas Variáveis'] = st.number_input("Despesas Variáveis", value=dados_mes_selecionado['Despesas Variáveis'])
-dados_mes_selecionado['Impostos'] = st.number_input("Impostos", value=dados_mes_selecionado['Impostos'])
-dados_mes_selecionado['Investimentos'] = st.number_input("Investimentos", value=dados_mes_selecionado['Investimentos'])
+# Receitas
+st.subheader('Receitas')
+n_receitas = st.number_input("Quantas receitas você quer adicionar?", min_value=1, step=1, key=f"n_receitas_{mes_selecionado}")
+for i in range(n_receitas):
+    nome_receita = st.text_input(f"Nome da receita {i+1}", key=f"nome_receita_{i}_{mes_selecionado}")
+    valor_receita = st.number_input(f"Valor da receita {i+1} (R$)", min_value=0.0, step=100.0, key=f"valor_receita_{i}_{mes_selecionado}")
+    dados_mes_selecionado['Receitas'][nome_receita] = valor_receita
+
+# Despesas Fixas
+st.subheader('Despesas Fixas')
+n_despesas_fixas = st.number_input("Quantas despesas fixas você quer adicionar?", min_value=1, step=1, key=f"n_despesas_fixas_{mes_selecionado}")
+for i in range(n_despesas_fixas):
+    nome_despesa_fixa = st.text_input(f"Nome da despesa fixa {i+1}", key=f"nome_despesa_fixa_{i}_{mes_selecionado}")
+    valor_despesa_fixa = st.number_input(f"Valor da despesa fixa {i+1} (R$)", min_value=0.0, step=100.0, key=f"valor_despesa_fixa_{i}_{mes_selecionado}")
+    dados_mes_selecionado['Despesas Fixas'][nome_despesa_fixa] = valor_despesa_fixa
+
+# Despesas Variáveis
+st.subheader('Despesas Variáveis')
+n_despesas_variaveis = st.number_input("Quantas despesas variáveis você quer adicionar?", min_value=1, step=1, key=f"n_despesas_variaveis_{mes_selecionado}")
+for i in range(n_despesas_variaveis):
+    nome_despesa_variavel = st.text_input(f"Nome da despesa variável {i+1}", key=f"nome_despesa_variavel_{i}_{mes_selecionado}")
+    valor_despesa_variavel = st.number_input(f"Valor da despesa variável {i+1} (R$)", min_value=0.0, step=100.0, key=f"valor_despesa_variavel_{i}_{mes_selecionado}")
+    dados_mes_selecionado['Despesas Variáveis'][nome_despesa_variavel] = valor_despesa_variavel
+
+# Impostos
+st.subheader('Impostos')
+n_impostos = st.number_input("Quantos impostos você quer adicionar?", min_value=1, step=1, key=f"n_impostos_{mes_selecionado}")
+for i in range(n_impostos):
+    nome_imposto = st.text_input(f"Nome do imposto {i+1}", key=f"nome_imposto_{i}_{mes_selecionado}")
+    valor_imposto = st.number_input(f"Valor do imposto {i+1} (R$)", min_value=0.0, step=100.0, key=f"valor_imposto_{i}_{mes_selecionado}")
+    dados_mes_selecionado['Impostos'][nome_imposto] = valor_imposto
+
+# Investimentos
+st.subheader('Investimentos')
+n_investimentos = st.number_input("Quantos investimentos você quer adicionar?", min_value=1, step=1, key=f"n_investimentos_{mes_selecionado}")
+for i in range(n_investimentos):
+    nome_investimento = st.text_input(f"Nome do investimento {i+1}", key=f"nome_investimento_{i}_{mes_selecionado}")
+    valor_investimento = st.number_input(f"Valor do investimento {i+1} (R$)", min_value=0.0, step=100.0, key=f"valor_investimento_{i}_{mes_selecionado}")
+    dados_mes_selecionado['Investimentos'][nome_investimento] = valor_investimento
 
 # Recalcular o fluxo de caixa
 receitas_mes, despesas_mes, fluxo_caixa_mes = calcular_fluxo_caixa(dados_mes_selecionado)
@@ -72,8 +118,11 @@ st.write(f"Fluxo de Caixa: R$ {fluxo_caixa_mes}")
 st.subheader(f'Distribuição das Despesas de {mes_selecionado}')
 dados_pie = pd.DataFrame({
     "Categoria": ["Despesas Fixas", "Despesas Variáveis", "Impostos", "Investimentos"],
-    "Valor": [dados_mes_selecionado['Despesas Fixas'], dados_mes_selecionado['Despesas Variáveis'], 
-              dados_mes_selecionado['Impostos'], dados_mes_selecionado['Investimentos']]
+    "Valor": [calcular_total_categoria(dados_mes_selecionado['Despesas Fixas']), 
+              calcular_total_categoria(dados_mes_selecionado['Despesas Variáveis']),
+              calcular_total_categoria(dados_mes_selecionado['Impostos']),
+              calcular_total_categoria(dados_mes_selecionado['Investimentos'])]
 })
 fig_pizza = px.pie(dados_pie, names='Categoria', values='Valor', title=f'Distribuição de Despesas em {mes_selecionado}')
 st.plotly_chart(fig_pizza)
+
