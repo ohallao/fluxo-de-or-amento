@@ -24,7 +24,7 @@ Este projeto está hospedado gratuitamente no Streamlit Cloud. Você pode acessa
 
 Acessar Aplicativo Budget Flow 
 
-https://fluxo-de-orcamento.streamlit.app/
+https://budgetflow.streamlit.app/
 
 ## Futuras Atualizações
 
