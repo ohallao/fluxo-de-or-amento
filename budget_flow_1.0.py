@@ -9,107 +9,71 @@ Original file is located at
 
 import streamlit as st
 import pandas as pd
-import matplotlib.pyplot as plt
 import plotly.express as px
 
-# Título do App
-st.title('Budget Flow - Projeção Mensal e Anual')
+# Função para gerar dados de exemplo para cada mês
+def gerar_dados_exemplo():
+    meses = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 
+             'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro']
+    dados = {mes: {"Receitas": 0, "Despesas Fixas": 0, "Despesas Variáveis": 0, "Impostos": 0, "Investimentos": 0} for mes in meses}
+    return dados
 
-# Meses do Ano
-meses = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro']
+# Função para calcular totais mensais e fluxo de caixa
+def calcular_fluxo_caixa(dados_mensais):
+    receitas = dados_mensais['Receitas']
+    despesas = dados_mensais['Despesas Fixas'] + dados_mensais['Despesas Variáveis'] + dados_mensais['Impostos'] + dados_mensais['Investimentos']
+    fluxo_caixa = receitas - despesas
+    return receitas, despesas, fluxo_caixa
 
-# Seções do App
-st.header('Insira seus Dados')
+# Dados financeiros para cada mês
+dados_por_mes = gerar_dados_exemplo()
 
-# Função para capturar os dados do usuário via Streamlit
-def inserir_dados_streamlit():
-    categorias = {}
+# Página Inicial - Resumo Anual
+st.title('Dashboard Financeiro Anual')
 
-    # Receitas
-    st.subheader('Receitas')
-    categorias["Receitas"] = {}
-    n_receitas = st.number_input("Quantas fontes de receita você tem?", min_value=1, step=1)
-    for i in range(n_receitas):
-        fonte = st.text_input(f"Digite o nome da receita {i + 1}", key=f"receita_{i}")
-        valor = st.number_input(f"Digite o valor mensal da receita {i + 1}: R$", min_value=0.0, step=100.0, key=f"valor_receita_{i}")
-        categorias["Receitas"][fonte] = valor
+# Tabela de Resumo para todos os meses
+st.header('Resumo Mensal')
+resumo = {"Meses": [], "Receitas": [], "Despesas": [], "Fluxo de Caixa": []}
+for mes, dados in dados_por_mes.items():
+    receitas, despesas, fluxo_caixa = calcular_fluxo_caixa(dados)
+    resumo['Meses'].append(mes)
+    resumo['Receitas'].append(receitas)
+    resumo['Despesas'].append(despesas)
+    resumo['Fluxo de Caixa'].append(fluxo_caixa)
 
-    # Despesas Fixas
-    st.subheader('Despesas Fixas')
-    categorias["Despesas Fixas"] = {}
-    n_despesas_fixas = st.number_input("Quantas despesas fixas você tem?", min_value=1, step=1)
-    for i in range(n_despesas_fixas):
-        despesa = st.text_input(f"Digite o nome da despesa fixa {i + 1}", key=f"despesa_fixa_{i}")
-        valor = st.number_input(f"Digite o valor mensal da despesa fixa {i + 1}: R$", min_value=0.0, step=50.0, key=f"valor_despesa_fixa_{i}")
-        categorias["Despesas Fixas"][despesa] = valor
+df_resumo = pd.DataFrame(resumo)
+st.write(df_resumo)
 
-    # Despesas Variáveis
-    st.subheader('Despesas Variáveis')
-    categorias["Despesas Variáveis"] = {}
-    n_despesas_variaveis = st.number_input("Quantas despesas variáveis você tem?", min_value=1, step=1)
-    for i in range(n_despesas_variaveis):
-        despesa = st.text_input(f"Digite o nome da despesa variável {i + 1}", key=f"despesa_variavel_{i}")
-        valor = st.number_input(f"Digite o valor mensal da despesa variável {i + 1}: R$", min_value=0.0, step=50.0, key=f"valor_despesa_variavel_{i}")
-        categorias["Despesas Variáveis"][despesa] = valor
+# Gráfico Anual de Linha
+st.header('Gráfico Anual - Receitas e Despesas')
+fig_anual = px.line(df_resumo, x="Meses", y=["Receitas", "Despesas"], title="Evolução Anual de Receitas e Despesas")
+st.plotly_chart(fig_anual)
 
-    # Impostos
-    st.subheader('Impostos')
-    categorias["Impostos"] = {}
-    n_impostos = st.number_input("Quantos impostos você paga?", min_value=1, step=1)
-    for i in range(n_impostos):
-        imposto = st.text_input(f"Digite o nome do imposto {i + 1}", key=f"imposto_{i}")
-        valor = st.number_input(f"Digite o valor mensal do imposto {i + 1}: R$", min_value=0.0, step=50.0, key=f"valor_imposto_{i}")
-        categorias["Impostos"][imposto] = valor
+# Seletor de Mês
+st.header('Detalhes por Mês')
+mes_selecionado = st.selectbox("Selecione o mês", df_resumo['Meses'])
 
-    # Investimentos
-    st.subheader('Investimentos')
-    categorias["Investimentos"] = {}
-    n_investimentos = st.number_input("Quantos investimentos você faz?", min_value=1, step=1)
-    for i in range(n_investimentos):
-        investimento = st.text_input(f"Digite o nome do investimento {i + 1}", key=f"investimento_{i}")
-        valor = st.number_input(f"Digite o valor mensal do investimento {i + 1}: R$", min_value=0.0, step=50.0, key=f"valor_investimento_{i}")
-        categorias["Investimentos"][investimento] = valor
+# Dados detalhados do mês selecionado
+st.subheader(f'Detalhes de {mes_selecionado}')
+dados_mes_selecionado = dados_por_mes[mes_selecionado]
 
-    return categorias
+# Exibir dados detalhados e permitir que o usuário altere
+dados_mes_selecionado['Receitas'] = st.number_input("Receitas", value=dados_mes_selecionado['Receitas'])
+dados_mes_selecionado['Despesas Fixas'] = st.number_input("Despesas Fixas", value=dados_mes_selecionado['Despesas Fixas'])
+dados_mes_selecionado['Despesas Variáveis'] = st.number_input("Despesas Variáveis", value=dados_mes_selecionado['Despesas Variáveis'])
+dados_mes_selecionado['Impostos'] = st.number_input("Impostos", value=dados_mes_selecionado['Impostos'])
+dados_mes_selecionado['Investimentos'] = st.number_input("Investimentos", value=dados_mes_selecionado['Investimentos'])
 
-# Função para calcular o total de cada categoria
-def calcular_total(categoria, is_anual=False):
-    total = sum(categorias[categoria].values())
-    if is_anual:
-        total *= 12
-    return total
+# Recalcular o fluxo de caixa
+receitas_mes, despesas_mes, fluxo_caixa_mes = calcular_fluxo_caixa(dados_mes_selecionado)
+st.write(f"Fluxo de Caixa: R$ {fluxo_caixa_mes}")
 
-# Captura os dados do usuário
-categorias = inserir_dados_streamlit()
-
-# Seleção de Mês
-mes_selecionado = st.selectbox("Selecione o mês para ver os dados detalhados", meses)
-
-# Exibir dados detalhados do mês
-st.header(f'Dados Detalhados de {mes_selecionado}')
-totais_mensais = {cat: calcular_total(cat) for cat in categorias}
-st.write(f"Receitas: R$ {totais_mensais['Receitas']}")
-for categoria in categorias:
-    if categoria != 'Receitas':
-        st.write(f"{categoria}: R$ {totais_mensais[categoria]}")
-
-# Gráfico Interativo de Porcentagens (Pie Chart) para o Mês Selecionado
-st.subheader('Distribuição de Receitas e Despesas')
-fig_pie = px.pie(
-    names=["Receitas", "Despesas Fixas", "Despesas Variáveis", "Impostos", "Investimentos"],
-    values=[totais_mensais['Receitas'], totais_mensais['Despesas Fixas'], totais_mensais['Despesas Variáveis'], totais_mensais['Impostos'], totais_mensais['Investimentos']],
-    title=f"Porcentagem de Receitas e Despesas em {mes_selecionado}"
-)
-st.plotly_chart(fig_pie)
-
-# Gráfico de Linha Anual para Receitas e Despesas
-st.subheader('Gráfico Anual')
-dados_anuais = {
-    "Meses": meses,
-    "Receitas": [totais_mensais["Receitas"] for _ in meses],  # Você pode ajustar esses valores conforme seus dados
-    "Despesas": [sum(totais_mensais[cat] for cat in categorias if cat != "Receitas") for _ in meses]  # Sumariza todas as despesas
-}
-
-df_anuais = pd.DataFrame(dados_anuais)
-fig_linha = px.line(df_anuais, x="Meses", y=["Receitas", "Despesas"], title="Receitas e Despesas Anuais")
-st.plotly_chart(fig_linha)
+# Gráfico de Pizza (Porcentagem) para o mês selecionado
+st.subheader(f'Distribuição das Despesas de {mes_selecionado}')
+dados_pie = pd.DataFrame({
+    "Categoria": ["Despesas Fixas", "Despesas Variáveis", "Impostos", "Investimentos"],
+    "Valor": [dados_mes_selecionado['Despesas Fixas'], dados_mes_selecionado['Despesas Variáveis'], 
+              dados_mes_selecionado['Impostos'], dados_mes_selecionado['Investimentos']]
+})
+fig_pizza = px.pie(dados_pie, names='Categoria', values='Valor', title=f'Distribuição de Despesas em {mes_selecionado}')
+st.plotly_chart(fig_pizza)
