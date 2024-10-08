@@ -44,17 +44,19 @@ dados_por_mes = gerar_dados_exemplo()
 # Página Inicial - Resumo Anual
 st.title('Dashboard Financeiro Anual')
 
-# Tabela de Resumo para todos os meses
-st.header('Resumo Mensal')
-resumo = {"Meses": [], "Receitas": [], "Despesas": [], "Fluxo de Caixa": []}
-for mes, dados in dados_por_mes.items():
-    receitas, despesas, fluxo_caixa = calcular_fluxo_caixa(dados)
-    resumo['Meses'].append(mes)
-    resumo['Receitas'].append(receitas)
-    resumo['Despesas'].append(despesas)
-    resumo['Fluxo de Caixa'].append(fluxo_caixa)
+# Função para atualizar o resumo mensal
+def atualizar_resumo():
+    resumo = {"Meses": [], "Receitas": [], "Despesas": [], "Fluxo de Caixa": []}
+    for mes, dados in dados_por_mes.items():
+        receitas, despesas, fluxo_caixa = calcular_fluxo_caixa(dados)
+        resumo['Meses'].append(mes)
+        resumo['Receitas'].append(receitas)
+        resumo['Despesas'].append(despesas)
+        resumo['Fluxo de Caixa'].append(fluxo_caixa)
+    return pd.DataFrame(resumo)
 
-df_resumo = pd.DataFrame(resumo)
+# Tabela de Resumo para todos os meses
+df_resumo = atualizar_resumo()
 
 # Verificar se há dados suficientes para exibir o resumo e gráficos
 if len(df_resumo) > 0:
@@ -64,7 +66,6 @@ if len(df_resumo) > 0:
     st.header('Gráfico Anual - Receitas e Despesas')
     fig_anual = px.line(df_resumo, x="Meses", y=["Receitas", "Despesas"], title="Evolução Anual de Receitas e Despesas")
     st.plotly_chart(fig_anual)
-
 else:
     st.warning("Nenhum dado disponível para exibir o Resumo Mensal e o Gráfico Anual.")
 
@@ -116,7 +117,7 @@ for i in range(n_investimentos):
     valor_investimento = st.sidebar.number_input(f"Valor do investimento {i+1} (R$)", min_value=0.0, step=100.0, key=f"valor_investimento_{i}_{mes_selecionado}")
     dados_mes_selecionado['Investimentos'][nome_investimento] = valor_investimento
 
-# Recalcular o fluxo de caixa
+# Recalcular o fluxo de caixa após as edições
 receitas_mes, despesas_mes, fluxo_caixa_mes = calcular_fluxo_caixa(dados_mes_selecionado)
 st.write(f"Fluxo de Caixa: R$ {fluxo_caixa_mes}")
 
@@ -132,3 +133,10 @@ dados_pie = pd.DataFrame({
 })
 fig_pizza = px.pie(dados_pie, names='Categoria', values='Valor', title=f'Distribuição de Receitas e Despesas em {mes_selecionado}')
 st.plotly_chart(fig_pizza)
+
+# Recalcular o Resumo Mensal após a edição
+df_resumo = atualizar_resumo()
+st.write("Resumo Mensal Atualizado:")
+st.write(df_resumo)
+
+
