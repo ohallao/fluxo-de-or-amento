@@ -24,6 +24,10 @@ def gerar_dados_exemplo():
         } for mes in meses}
     return dados
 
+# Inicializar os dados no session_state se ainda não estiverem definidos
+if 'dados_por_mes' not in st.session_state:
+    st.session_state.dados_por_mes = gerar_dados_exemplo()
+
 # Função para calcular o total de uma categoria
 def calcular_total_categoria(categoria):
     return sum(categoria.values())
@@ -38,16 +42,10 @@ def calcular_fluxo_caixa(dados_mensais):
     fluxo_caixa = total_receitas - total_despesas
     return total_receitas, total_despesas, fluxo_caixa
 
-# Dados financeiros para cada mês
-dados_por_mes = gerar_dados_exemplo()
-
-# Página Inicial - Resumo Anual
-st.title('Dashboard Financeiro Anual')
-
 # Função para atualizar o resumo mensal
 def atualizar_resumo():
     resumo = {"Meses": [], "Receitas": [], "Despesas": [], "Fluxo de Caixa": []}
-    for mes, dados in dados_por_mes.items():
+    for mes, dados in st.session_state.dados_por_mes.items():
         receitas, despesas, fluxo_caixa = calcular_fluxo_caixa(dados)
         resumo['Meses'].append(mes)
         resumo['Receitas'].append(receitas)
@@ -55,27 +53,28 @@ def atualizar_resumo():
         resumo['Fluxo de Caixa'].append(fluxo_caixa)
     return pd.DataFrame(resumo)
 
+# Página Inicial - Resumo Anual
+st.title('Dashboard Financeiro Anual')
+
 # Tabela de Resumo para todos os meses
 df_resumo = atualizar_resumo()
 
-# Verificar se há dados suficientes para exibir o resumo e gráficos
-if len(df_resumo) > 0:
-    st.write(df_resumo)
+# Exibir o DataFrame com Resumo Mensal
+st.header('Resumo Mensal')
+st.write(df_resumo)
 
-    # Gráfico Anual de Linha
-    st.header('Gráfico Anual - Receitas e Despesas')
-    fig_anual = px.line(df_resumo, x="Meses", y=["Receitas", "Despesas"], title="Evolução Anual de Receitas e Despesas")
-    st.plotly_chart(fig_anual)
-else:
-    st.warning("Nenhum dado disponível para exibir o Resumo Mensal e o Gráfico Anual.")
+# Gráfico Anual de Linha
+st.header('Gráfico Anual - Receitas e Despesas')
+fig_anual = px.line(df_resumo, x="Meses", y=["Receitas", "Despesas"], title="Evolução Anual de Receitas e Despesas")
+st.plotly_chart(fig_anual)
 
-# Aba lateral para seleção do mês e inserção de dados
+# Seletor de Mês e inserção de dados
 st.sidebar.header('Selecione e Edite o Mês')
 mes_selecionado = st.sidebar.selectbox("Selecione o mês", df_resumo['Meses'])
 
 # Dados detalhados do mês selecionado
 st.sidebar.subheader(f'Detalhes de {mes_selecionado}')
-dados_mes_selecionado = dados_por_mes[mes_selecionado]
+dados_mes_selecionado = st.session_state.dados_por_mes[mes_selecionado]
 
 # Receitas
 st.sidebar.subheader('Receitas')
@@ -134,9 +133,10 @@ dados_pie = pd.DataFrame({
 fig_pizza = px.pie(dados_pie, names='Categoria', values='Valor', title=f'Distribuição de Receitas e Despesas em {mes_selecionado}')
 st.plotly_chart(fig_pizza)
 
-# Recalcular o Resumo Mensal após a edição
+# Recalcular e atualizar o Resumo Mensal após a edição
 df_resumo = atualizar_resumo()
 st.write("Resumo Mensal Atualizado:")
 st.write(df_resumo)
+
 
 
