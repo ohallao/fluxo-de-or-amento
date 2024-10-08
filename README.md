@@ -8,6 +8,13 @@ Este projeto é uma aplicação web interativa criada com **Streamlit** que perm
 - Cálculo automático do fluxo de caixa mensal e anual.
 - Visualização gráfica das despesas mensais e anuais.
 
+##  Deploy na Streamlit Cloud
+Este projeto está hospedado gratuitamente no Streamlit Cloud. Você pode acessar a versão online diretamente no seguinte link:
+
+Acessar Aplicativo Budget Flow 
+
+https://budgetflow.streamlit.app/
+
 ## Tecnologias Utilizadas
 
 - **Python**: Linguagem de programação principal.
@@ -19,12 +26,6 @@ Este projeto é uma aplicação web interativa criada com **Streamlit** que perm
 
 ![Fluxograma do Processo](Fluxograma.jpg)
 
-##  Deploy na Streamlit Cloud
-Este projeto está hospedado gratuitamente no Streamlit Cloud. Você pode acessar a versão online diretamente no seguinte link:
-
-Acessar Aplicativo Budget Flow 
-
-https://budgetflow.streamlit.app/
 
 ## Futuras Atualizações
 
