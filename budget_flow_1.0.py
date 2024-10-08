@@ -56,64 +56,54 @@ for mes, dados in dados_por_mes.items():
 
 df_resumo = pd.DataFrame(resumo)
 
-# Verificar se há dados suficientes para exibir o resumo e gráficos
-if len(df_resumo) > 0:
-    st.write(df_resumo)
+# Exibir o DataFrame interativo com Resumo dos Meses
+st.dataframe(df_resumo)
 
-    # Gráfico Anual de Linha
-    st.header('Gráfico Anual - Receitas e Despesas')
-    fig_anual = px.line(df_resumo, x="Meses", y=["Receitas", "Despesas"], title="Evolução Anual de Receitas e Despesas")
-    st.plotly_chart(fig_anual)
+# Seletor de Mês (aba nova para detalhes)
+mes_selecionado = st.selectbox("Selecione o mês para editar", df_resumo['Meses'])
 
-else:
-    st.warning("Nenhum dado disponível para exibir o Resumo Mensal e o Gráfico Anual.")
-
-# Aba lateral para seleção do mês e inserção de dados
-st.sidebar.header('Selecione e Edite o Mês')
-mes_selecionado = st.sidebar.selectbox("Selecione o mês", df_resumo['Meses'])
-
-# Dados detalhados do mês selecionado
-st.sidebar.subheader(f'Detalhes de {mes_selecionado}')
+# Exibir os dados detalhados do mês selecionado para edição
+st.subheader(f'Detalhes de {mes_selecionado}')
 dados_mes_selecionado = dados_por_mes[mes_selecionado]
 
 # Receitas
-st.sidebar.subheader('Receitas')
-n_receitas = st.sidebar.number_input("Quantas receitas você quer adicionar?", min_value=1, step=1, key=f"n_receitas_{mes_selecionado}")
+st.subheader('Receitas')
+n_receitas = st.number_input("Quantas receitas você quer adicionar?", min_value=1, step=1, key=f"n_receitas_{mes_selecionado}")
 for i in range(n_receitas):
-    nome_receita = st.sidebar.text_input(f"Nome da receita {i+1}", key=f"nome_receita_{i}_{mes_selecionado}")
-    valor_receita = st.sidebar.number_input(f"Valor da receita {i+1} (R$)", min_value=0.0, step=100.0, key=f"valor_receita_{i}_{mes_selecionado}")
+    nome_receita = st.text_input(f"Nome da receita {i+1}", key=f"nome_receita_{i}_{mes_selecionado}")
+    valor_receita = st.number_input(f"Valor da receita {i+1} (R$)", min_value=0.0, step=100.0, key=f"valor_receita_{i}_{mes_selecionado}")
     dados_mes_selecionado['Receitas'][nome_receita] = valor_receita
 
 # Despesas Fixas
-st.sidebar.subheader('Despesas Fixas')
-n_despesas_fixas = st.sidebar.number_input("Quantas despesas fixas você quer adicionar?", min_value=1, step=1, key=f"n_despesas_fixas_{mes_selecionado}")
+st.subheader('Despesas Fixas')
+n_despesas_fixas = st.number_input("Quantas despesas fixas você quer adicionar?", min_value=1, step=1, key=f"n_despesas_fixas_{mes_selecionado}")
 for i in range(n_despesas_fixas):
-    nome_despesa_fixa = st.sidebar.text_input(f"Nome da despesa fixa {i+1}", key=f"nome_despesa_fixa_{i}_{mes_selecionado}")
-    valor_despesa_fixa = st.sidebar.number_input(f"Valor da despesa fixa {i+1} (R$)", min_value=0.0, step=100.0, key=f"valor_despesa_fixa_{i}_{mes_selecionado}")
+    nome_despesa_fixa = st.text_input(f"Nome da despesa fixa {i+1}", key=f"nome_despesa_fixa_{i}_{mes_selecionado}")
+    valor_despesa_fixa = st.number_input(f"Valor da despesa fixa {i+1} (R$)", min_value=0.0, step=100.0, key=f"valor_despesa_fixa_{i}_{mes_selecionado}")
     dados_mes_selecionado['Despesas Fixas'][nome_despesa_fixa] = valor_despesa_fixa
 
 # Despesas Variáveis
-st.sidebar.subheader('Despesas Variáveis')
-n_despesas_variaveis = st.sidebar.number_input("Quantas despesas variáveis você quer adicionar?", min_value=1, step=1, key=f"n_despesas_variaveis_{mes_selecionado}")
+st.subheader('Despesas Variáveis')
+n_despesas_variaveis = st.number_input("Quantas despesas variáveis você quer adicionar?", min_value=1, step=1, key=f"n_despesas_variaveis_{mes_selecionado}")
 for i in range(n_despesas_variaveis):
-    nome_despesa_variavel = st.sidebar.text_input(f"Nome da despesa variável {i+1}", key=f"nome_despesa_variavel_{i}_{mes_selecionado}")
-    valor_despesa_variavel = st.sidebar.number_input(f"Valor da despesa variável {i+1} (R$)", min_value=0.0, step=100.0, key=f"valor_despesa_variavel_{i}_{mes_selecionado}")
+    nome_despesa_variavel = st.text_input(f"Nome da despesa variável {i+1}", key=f"nome_despesa_variavel_{i}_{mes_selecionado}")
+    valor_despesa_variavel = st.number_input(f"Valor da despesa variável {i+1} (R$)", min_value=0.0, step=100.0, key=f"valor_despesa_variavel_{i}_{mes_selecionado}")
     dados_mes_selecionado['Despesas Variáveis'][nome_despesa_variavel] = valor_despesa_variavel
 
 # Impostos
-st.sidebar.subheader('Impostos')
-n_impostos = st.sidebar.number_input("Quantos impostos você quer adicionar?", min_value=1, step=1, key=f"n_impostos_{mes_selecionado}")
+st.subheader('Impostos')
+n_impostos = st.number_input("Quantos impostos você quer adicionar?", min_value=1, step=1, key=f"n_impostos_{mes_selecionado}")
 for i in range(n_impostos):
-    nome_imposto = st.sidebar.text_input(f"Nome do imposto {i+1}", key=f"nome_imposto_{i}_{mes_selecionado}")
-    valor_imposto = st.sidebar.number_input(f"Valor do imposto {i+1} (R$)", min_value=0.0, step=100.0, key=f"valor_imposto_{i}_{mes_selecionado}")
+    nome_imposto = st.text_input(f"Nome do imposto {i+1}", key=f"nome_imposto_{i}_{mes_selecionado}")
+    valor_imposto = st.number_input(f"Valor do imposto {i+1} (R$)", min_value=0.0, step=100.0, key=f"valor_imposto_{i}_{mes_selecionado}")
     dados_mes_selecionado['Impostos'][nome_imposto] = valor_imposto
 
 # Investimentos
-st.sidebar.subheader('Investimentos')
-n_investimentos = st.sidebar.number_input("Quantos investimentos você quer adicionar?", min_value=1, step=1, key=f"n_investimentos_{mes_selecionado}")
+st.subheader('Investimentos')
+n_investimentos = st.number_input("Quantos investimentos você quer adicionar?", min_value=1, step=1, key=f"n_investimentos_{mes_selecionado}")
 for i in range(n_investimentos):
-    nome_investimento = st.sidebar.text_input(f"Nome do investimento {i+1}", key=f"nome_investimento_{i}_{mes_selecionado}")
-    valor_investimento = st.sidebar.number_input(f"Valor do investimento {i+1} (R$)", min_value=0.0, step=100.0, key=f"valor_investimento_{i}_{mes_selecionado}")
+    nome_investimento = st.text_input(f"Nome do investimento {i+1}", key=f"nome_investimento_{i}_{mes_selecionado}")
+    valor_investimento = st.number_input(f"Valor do investimento {i+1} (R$)", min_value=0.0, step=100.0, key=f"valor_investimento_{i}_{mes_selecionado}")
     dados_mes_selecionado['Investimentos'][nome_investimento] = valor_investimento
 
 # Recalcular o fluxo de caixa
