@@ -133,10 +133,5 @@ dados_pie = pd.DataFrame({
 fig_pizza = px.pie(dados_pie, names='Categoria', values='Valor', title=f'Distribuição de Receitas e Despesas em {mes_selecionado}')
 st.plotly_chart(fig_pizza)
 
-# Recalcular e atualizar o Resumo Mensal após a edição
-df_resumo = atualizar_resumo()
-st.write("Resumo Mensal Atualizado:")
-st.write(df_resumo)
-
 
 
