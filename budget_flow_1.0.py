@@ -25,17 +25,14 @@ def gerar_dados_exemplo():
 if 'dados_por_mes' not in st.session_state:
     st.session_state.dados_por_mes = gerar_dados_exemplo()
 
-# Função para exibir a seção de edição de valores
-def editar_mes(mes):
-    st.subheader(f'Editar {mes}')
+# Função para exibir a seção de edição de valores diretamente nas caixas
+def exibir_caixas_edicao(mes, dados_mes):
+    st.subheader(f'{mes}')
     
-    # Carregar os dados atuais do mês selecionado
-    dados_mes = st.session_state.dados_por_mes[mes]
-    
-    # Input para receitas, despesas e investimentos
-    dados_mes['Receitas'] = st.number_input(f"Receitas para {mes}", min_value=0.0, step=100.0, value=dados_mes['Receitas'])
-    dados_mes['Despesas'] = st.number_input(f"Despesas para {mes}", min_value=0.0, step=100.0, value=dados_mes['Despesas'])
-    dados_mes['Investimentos'] = st.number_input(f"Investimentos para {mes}", min_value=0.0, step=100.0, value=dados_mes['Investimentos'])
+    # Campos para edição manual como se fosse uma célula do Excel
+    dados_mes['Receitas'] = st.text_input(f"Receitas de {mes}", value=str(dados_mes['Receitas']), key=f"receitas_{mes}")
+    dados_mes['Despesas'] = st.text_input(f"Despesas de {mes}", value=str(dados_mes['Despesas']), key=f"despesas_{mes}")
+    dados_mes['Investimentos'] = st.text_input(f"Investimentos de {mes}", value=str(dados_mes['Investimentos']), key=f"investimentos_{mes}")
     
     # Atualizar os dados no estado da sessão
     st.session_state.dados_por_mes[mes] = dados_mes
@@ -43,7 +40,7 @@ def editar_mes(mes):
 # Página inicial com as caixas dos meses
 st.title('Planejamento Financeiro - Meses do Ano')
 
-st.subheader('Clique em um mês para editar seus valores')
+st.subheader('Clique em um mês para editar seus valores manualmente')
 
 # Exibir os meses em "caixas" ou botões para clicar
 col1, col2, col3 = st.columns(3)
@@ -52,10 +49,10 @@ meses = list(st.session_state.dados_por_mes.keys())
 for i, mes in enumerate(meses):
     col = [col1, col2, col3][i % 3]  # Distribuir os meses entre as colunas
     with col:
-        if st.button(mes):
-            editar_mes(mes)
+        with st.expander(mes):
+            exibir_caixas_edicao(mes, st.session_state.dados_por_mes[mes])
 
 # Exibir os dados atualizados para cada mês
-st.subheader('Resumo dos Meses')
+st.subheader('Resumo dos Meses Atualizados')
 for mes, dados in st.session_state.dados_por_mes.items():
     st.write(f"{mes} - Receitas: R$ {dados['Receitas']}, Despesas: R$ {dados['Despesas']}, Investimentos: R$ {dados['Investimentos']}")
