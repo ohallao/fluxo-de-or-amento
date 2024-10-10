@@ -26,12 +26,16 @@ def gerar_dados_exemplo():
 if 'dados_por_mes' not in st.session_state:
     st.session_state.dados_por_mes = gerar_dados_exemplo()
 
-# Função para exibir o resumo de um mês
+# Função para exibir o resumo de um mês com estilo futurístico
 def exibir_resumo_mes(mes, dados_mes):
-    st.markdown(f"#### {mes} 2023")
-    st.write(f"Receitas: R$ {dados_mes['Receitas']:.2f}")
-    st.write(f"Despesas: R$ {dados_mes['Despesas']:.2f}")
-    st.write(f"Investimentos: R$ {dados_mes['Investimentos']:.2f}")
+    st.markdown(f"""
+    <div style='background-color:#1e1e2e; padding:20px; border-radius:15px; margin-bottom:10px; color:#fff;'>
+        <h4 style='text-align:center;'>{mes} 2023</h4>
+        <p><b>Receitas:</b> R$ {dados_mes['Receitas']:.2f}</p>
+        <p><b>Despesas:</b> R$ {dados_mes['Despesas']:.2f}</p>
+        <p><b>Investimentos:</b> R$ {dados_mes['Investimentos']:.2f}</p>
+    </div>
+    """, unsafe_allow_html=True)
 
 # Função para calcular a distribuição em porcentagens
 def calcular_percentuais(dados_mes):
@@ -72,9 +76,9 @@ def gerar_grafico_anual():
 # Página inicial
 st.title('Planejamento Financeiro - Meses do Ano')
 
-# Seção destacada para Resumo dos Meses
+# Layout futurístico para Resumo dos Meses
 st.markdown('---')
-st.markdown('## Resumo dos Meses')
+st.markdown('<h2 style="text-align:center; color:#42b883;">Resumo dos Meses</h2>', unsafe_allow_html=True)
 
 col1, col2, col3 = st.columns(3)
 meses = list(st.session_state.dados_por_mes.keys())
@@ -82,26 +86,23 @@ meses = list(st.session_state.dados_por_mes.keys())
 for i, mes in enumerate(meses):
     col = [col1, col2, col3][i % 3]  # Distribuir os meses entre as colunas
     with col:
-        st.markdown(f"<div style='background-color:#f0f0f5; padding:10px; border-radius:10px;'>", unsafe_allow_html=True)
         exibir_resumo_mes(mes, st.session_state.dados_por_mes[mes])
-        st.markdown("</div>", unsafe_allow_html=True)
 
-# Seções de Receita e Despesa com caixas expansíveis
+# Seção de edição de Receitas e Despesas com caixa expansível após seleção do mês
 st.markdown('---')
-st.markdown('## Receitas por Mês')
-for mes in meses:
-    with st.expander(f"Editar Receitas de {mes}"):
-        st.session_state.dados_por_mes[mes]['Receitas'] = st.number_input(f"Receitas em {mes}", min_value=0.0, step=100.0, value=st.session_state.dados_por_mes[mes]['Receitas'])
+st.markdown('<h2 style="text-align:center; color:#42b883;">Editar Receitas e Despesas</h2>', unsafe_allow_html=True)
 
-st.markdown('## Despesas por Mês')
-for mes in meses:
-    with st.expander(f"Editar Despesas de {mes}"):
-        st.session_state.dados_por_mes[mes]['Despesas'] = st.number_input(f"Despesas em {mes}", min_value=0.0, step=100.0, value=st.session_state.dados_por_mes[mes]['Despesas'])
+mes_selecionado = st.selectbox("Selecione o mês para editar", meses)
+
+# Caixa expansível para editar dados do mês selecionado
+with st.expander(f"Editar {mes_selecionado}"):
+    st.session_state.dados_por_mes[mes_selecionado]['Receitas'] = st.number_input(f"Receitas em {mes_selecionado}", min_value=0.0, step=100.0, value=st.session_state.dados_por_mes[mes_selecionado]['Receitas'])
+    st.session_state.dados_por_mes[mes_selecionado]['Despesas'] = st.number_input(f"Despesas em {mes_selecionado}", min_value=0.0, step=100.0, value=st.session_state.dados_por_mes[mes_selecionado]['Despesas'])
+    st.session_state.dados_por_mes[mes_selecionado]['Investimentos'] = st.number_input(f"Investimentos em {mes_selecionado}", min_value=0.0, step=100.0, value=st.session_state.dados_por_mes[mes_selecionado]['Investimentos'])
 
 # Gráfico de Pizza
 st.markdown('---')
 st.subheader('Gráfico de Pizza (Selecione o Mês)')
-mes_selecionado = st.selectbox("Selecione o mês", meses)
 gerar_grafico_pizza(mes_selecionado)
 
 # Gráfico Anual de Linha
