@@ -99,7 +99,50 @@ def gerar_grafico_anual():
     fig = px.line(df_resumo, x='Meses', y=['Receitas', 'Despesas'], title="Evolução Anual de Receitas e Despesas")
     st.plotly_chart(fig)
 
-# Página inicial
+# Função para exportar os dados para CSV
+def exportar_csv():
+    df = pd.DataFrame(st.session_state.dados_por_mes).T  # Transpor para ficar mais fácil de ler
+    return df.to_csv().encode('utf-8')
+
+# Função para processar upload de arquivo CSV ou Excel
+def processar_upload(arquivo):
+    if arquivo is not None:
+        try:
+            # Processar CSV
+            if arquivo.name.endswith('.csv'):
+                dados = pd.read_csv(arquivo)
+            # Processar Excel
+            elif arquivo.name.endswith('.xlsx'):
+                dados = pd.read_excel(arquivo)
+            else:
+                st.error('Formato de arquivo não suportado. Faça o upload de CSV ou Excel.')
+                return None
+            return dados
+        except Exception as e:
+            st.error(f"Ocorreu um erro ao processar o arquivo: {e}")
+            return None
+    return None
+
+# Sidebar para upload de CSV ou Excel
+st.sidebar.header('Upload de Arquivo')
+arquivo = st.sidebar.file_uploader("Faça o upload do arquivo CSV ou Excel", type=['csv', 'xlsx'])
+dados_upload = processar_upload(arquivo)
+
+if dados_upload is not None:
+    st.sidebar.write('Dados do arquivo:')
+    st.sidebar.write(dados_upload)
+
+# Sidebar para download de CSV
+st.sidebar.header('Download dos Dados')
+csv = exportar_csv()
+st.sidebar.download_button(
+    label="Baixar dados em CSV",
+    data=csv,
+    file_name='orcamento_financeiro.csv',
+    mime='text/csv',
+)
+
+# Página principal
 st.title('Planejamento Financeiro - Meses do Ano')
 
 # Layout futurístico para Resumo dos Meses
@@ -141,3 +184,4 @@ gerar_grafico_pizza(mes_selecionado)
 st.markdown('---')
 st.subheader('Gráfico Anual de Linha')
 gerar_grafico_anual()
+
