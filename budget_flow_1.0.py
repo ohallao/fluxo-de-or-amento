@@ -9,15 +9,16 @@ Original file is located at
 
 import streamlit as st
 import pandas as pd
+import plotly.express as px
 
 # Função para gerar dados de exemplo para cada mês
 def gerar_dados_exemplo():
     meses = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 
              'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro']
     dados = {mes: {
-        "Receitas": 0.0, 
-        "Despesas": 0.0, 
-        "Investimentos": 0.0
+        "Receitas": "0.0",  # Edição livre, texto por padrão
+        "Despesas": "0.0", 
+        "Investimentos": "0.0"
         } for mes in meses}
     return dados
 
@@ -29,13 +30,26 @@ if 'dados_por_mes' not in st.session_state:
 def exibir_caixas_edicao(mes, dados_mes):
     st.subheader(f'{mes}')
     
-    # Campos para edição manual como se fosse uma célula do Excel
-    dados_mes['Receitas'] = st.text_input(f"Receitas de {mes}", value=str(dados_mes['Receitas']), key=f"receitas_{mes}")
-    dados_mes['Despesas'] = st.text_input(f"Despesas de {mes}", value=str(dados_mes['Despesas']), key=f"despesas_{mes}")
-    dados_mes['Investimentos'] = st.text_input(f"Investimentos de {mes}", value=str(dados_mes['Investimentos']), key=f"investimentos_{mes}")
+    # Campos para edição manual (texto livre)
+    dados_mes['Receitas'] = st.text_area(f"Receitas de {mes}", value=dados_mes['Receitas'], key=f"receitas_{mes}")
+    dados_mes['Despesas'] = st.text_area(f"Despesas de {mes}", value=dados_mes['Despesas'], key=f"despesas_{mes}")
+    dados_mes['Investimentos'] = st.text_area(f"Investimentos de {mes}", value=dados_mes['Investimentos'], key=f"investimentos_{mes}")
     
     # Atualizar os dados no estado da sessão
     st.session_state.dados_por_mes[mes] = dados_mes
+
+# Função para calcular a distribuição em porcentagens
+def calcular_percentuais(dados_mes):
+    try:
+        total = float(dados_mes['Receitas']) + float(dados_mes['Despesas']) + float(dados_mes['Investimentos'])
+        if total == 0:
+            return [0, 0, 0]
+        percent_receitas = (float(dados_mes['Receitas']) / total) * 100
+        percent_despesas = (float(dados_mes['Despesas']) / total) * 100
+        percent_investimentos = (float(dados_mes['Investimentos']) / total) * 100
+        return [percent_receitas, percent_despesas, percent_investimentos]
+    except:
+        return [0, 0, 0]
 
 # Página inicial com as caixas dos meses
 st.title('Planejamento Financeiro - Meses do Ano')
@@ -52,7 +66,17 @@ for i, mes in enumerate(meses):
         with st.expander(mes):
             exibir_caixas_edicao(mes, st.session_state.dados_por_mes[mes])
 
-# Exibir os dados atualizados para cada mês
-st.subheader('Resumo dos Meses Atualizados')
+# Gráfico de Pizza com porcentagem das receitas, despesas e investimentos para o mês selecionado
+st.subheader('Distribuição das Receitas, Despesas e Investimentos (%)')
+
+# Somente calcular se houver entradas válidas
 for mes, dados in st.session_state.dados_por_mes.items():
-    st.write(f"{mes} - Receitas: R$ {dados['Receitas']}, Despesas: R$ {dados['Despesas']}, Investimentos: R$ {dados['Investimentos']}")
+    percentuais = calcular_percentuais(dados)
+    if sum(percentuais) > 0:  # Apenas mostra o gráfico se houver valores
+        df_percent = pd.DataFrame({
+            'Categoria': ['Receitas', 'Despesas', 'Investimentos'],
+            'Percentual': percentuais
+        })
+        fig = px.pie(df_percent, values='Percentual', names='Categoria', title=f'Distribuição em {mes}')
+        st.plotly_chart(fig)
+
