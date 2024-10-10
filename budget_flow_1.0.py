@@ -28,7 +28,7 @@ if 'dados_por_mes' not in st.session_state:
 
 # Função para exibir o resumo de um mês
 def exibir_resumo_mes(mes, dados_mes):
-    st.markdown(f"### {mes} 2023")
+    st.markdown(f"#### {mes} 2023")
     st.write(f"Receitas: R$ {dados_mes['Receitas']:.2f}")
     st.write(f"Despesas: R$ {dados_mes['Despesas']:.2f}")
     st.write(f"Investimentos: R$ {dados_mes['Investimentos']:.2f}")
@@ -69,39 +69,42 @@ def gerar_grafico_anual():
     fig = px.line(df_resumo, x='Meses', y=['Receitas', 'Despesas'], title="Evolução Anual de Receitas e Despesas")
     st.plotly_chart(fig)
 
-# Página inicial com as caixas dos meses
+# Página inicial
 st.title('Planejamento Financeiro - Meses do Ano')
 
-# Exibir os meses em caixas de resumo sem edição
-st.subheader('Resumo dos Meses')
+# Seção destacada para Resumo dos Meses
+st.markdown('---')
+st.markdown('## Resumo dos Meses')
+
 col1, col2, col3 = st.columns(3)
 meses = list(st.session_state.dados_por_mes.keys())
 
 for i, mes in enumerate(meses):
     col = [col1, col2, col3][i % 3]  # Distribuir os meses entre as colunas
     with col:
+        st.markdown(f"<div style='background-color:#f0f0f5; padding:10px; border-radius:10px;'>", unsafe_allow_html=True)
         exibir_resumo_mes(mes, st.session_state.dados_por_mes[mes])
+        st.markdown("</div>", unsafe_allow_html=True)
 
-# Seção de Receita e Despesa (caixas)
-st.subheader('Receitas por Mês')
-col1, col2, col3 = st.columns(3)
-for i, mes in enumerate(meses):
-    col = [col1, col2, col3][i % 3]
-    with col:
-        st.write(f"{mes} - R$ {st.session_state.dados_por_mes[mes]['Receitas']:.2f}")
+# Seções de Receita e Despesa com caixas expansíveis
+st.markdown('---')
+st.markdown('## Receitas por Mês')
+for mes in meses:
+    with st.expander(f"Editar Receitas de {mes}"):
+        st.session_state.dados_por_mes[mes]['Receitas'] = st.number_input(f"Receitas em {mes}", min_value=0.0, step=100.0, value=st.session_state.dados_por_mes[mes]['Receitas'])
 
-st.subheader('Despesas por Mês')
-col1, col2, col3 = st.columns(3)
-for i, mes in enumerate(meses):
-    col = [col1, col2, col3][i % 3]
-    with col:
-        st.write(f"{mes} - R$ {st.session_state.dados_por_mes[mes]['Despesas']:.2f}")
+st.markdown('## Despesas por Mês')
+for mes in meses:
+    with st.expander(f"Editar Despesas de {mes}"):
+        st.session_state.dados_por_mes[mes]['Despesas'] = st.number_input(f"Despesas em {mes}", min_value=0.0, step=100.0, value=st.session_state.dados_por_mes[mes]['Despesas'])
 
 # Gráfico de Pizza
+st.markdown('---')
 st.subheader('Gráfico de Pizza (Selecione o Mês)')
 mes_selecionado = st.selectbox("Selecione o mês", meses)
 gerar_grafico_pizza(mes_selecionado)
 
 # Gráfico Anual de Linha
+st.markdown('---')
 st.subheader('Gráfico Anual de Linha')
 gerar_grafico_anual()
