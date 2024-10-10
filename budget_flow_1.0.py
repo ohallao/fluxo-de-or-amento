@@ -9,18 +9,15 @@ Original file is located at
 
 import streamlit as st
 import pandas as pd
-import plotly.express as px
 
 # Função para gerar dados de exemplo para cada mês
 def gerar_dados_exemplo():
     meses = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 
              'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro']
     dados = {mes: {
-        "Receitas": {}, 
-        "Despesas Fixas": {}, 
-        "Despesas Variáveis": {}, 
-        "Impostos": {}, 
-        "Investimentos": {}
+        "Receitas": 0.0, 
+        "Despesas": 0.0, 
+        "Investimentos": 0.0
         } for mes in meses}
     return dados
 
@@ -28,110 +25,37 @@ def gerar_dados_exemplo():
 if 'dados_por_mes' not in st.session_state:
     st.session_state.dados_por_mes = gerar_dados_exemplo()
 
-# Função para calcular o total de uma categoria
-def calcular_total_categoria(categoria):
-    return sum(categoria.values())
+# Função para exibir a seção de edição de valores
+def editar_mes(mes):
+    st.subheader(f'Editar {mes}')
+    
+    # Carregar os dados atuais do mês selecionado
+    dados_mes = st.session_state.dados_por_mes[mes]
+    
+    # Input para receitas, despesas e investimentos
+    dados_mes['Receitas'] = st.number_input(f"Receitas para {mes}", min_value=0.0, step=100.0, value=dados_mes['Receitas'])
+    dados_mes['Despesas'] = st.number_input(f"Despesas para {mes}", min_value=0.0, step=100.0, value=dados_mes['Despesas'])
+    dados_mes['Investimentos'] = st.number_input(f"Investimentos para {mes}", min_value=0.0, step=100.0, value=dados_mes['Investimentos'])
+    
+    # Atualizar os dados no estado da sessão
+    st.session_state.dados_por_mes[mes] = dados_mes
 
-# Função para calcular o fluxo de caixa
-def calcular_fluxo_caixa(dados_mensais):
-    total_receitas = calcular_total_categoria(dados_mensais['Receitas'])
-    total_despesas = (calcular_total_categoria(dados_mensais['Despesas Fixas']) +
-                      calcular_total_categoria(dados_mensais['Despesas Variáveis']) +
-                      calcular_total_categoria(dados_mensais['Impostos']) +
-                      calcular_total_categoria(dados_mensais['Investimentos']))
-    fluxo_caixa = total_receitas - total_despesas
-    return total_receitas, total_despesas, fluxo_caixa
+# Página inicial com as caixas dos meses
+st.title('Planejamento Financeiro - Meses do Ano')
 
-# Função para atualizar o resumo mensal
-def atualizar_resumo():
-    resumo = {"Meses": [], "Receitas": [], "Despesas": [], "Fluxo de Caixa": []}
-    for mes, dados in st.session_state.dados_por_mes.items():
-        receitas, despesas, fluxo_caixa = calcular_fluxo_caixa(dados)
-        resumo['Meses'].append(mes)
-        resumo['Receitas'].append(receitas)
-        resumo['Despesas'].append(despesas)
-        resumo['Fluxo de Caixa'].append(fluxo_caixa)
-    return pd.DataFrame(resumo)
+st.subheader('Clique em um mês para editar seus valores')
 
-# Página Inicial - Resumo Anual
-st.title('Dashboard Financeiro Anual')
+# Exibir os meses em "caixas" ou botões para clicar
+col1, col2, col3 = st.columns(3)
+meses = list(st.session_state.dados_por_mes.keys())
 
-# Tabela de Resumo para todos os meses
-df_resumo = atualizar_resumo()
+for i, mes in enumerate(meses):
+    col = [col1, col2, col3][i % 3]  # Distribuir os meses entre as colunas
+    with col:
+        if st.button(mes):
+            editar_mes(mes)
 
-# Exibir o DataFrame com Resumo Mensal
-st.header('Resumo Mensal')
-st.write(df_resumo)
-
-# Gráfico Anual de Linha
-st.header('Gráfico Anual - Receitas e Despesas')
-fig_anual = px.line(df_resumo, x="Meses", y=["Receitas", "Despesas"], title="Evolução Anual de Receitas e Despesas")
-st.plotly_chart(fig_anual)
-
-# Seletor de Mês e inserção de dados
-st.sidebar.header('Selecione e Edite o Mês')
-mes_selecionado = st.sidebar.selectbox("Selecione o mês", df_resumo['Meses'])
-
-# Dados detalhados do mês selecionado
-st.sidebar.subheader(f'Detalhes de {mes_selecionado}')
-dados_mes_selecionado = st.session_state.dados_por_mes[mes_selecionado]
-
-# Receitas
-st.sidebar.subheader('Receitas')
-n_receitas = st.sidebar.number_input("Quantas receitas você quer adicionar?", min_value=1, step=1, key=f"n_receitas_{mes_selecionado}")
-for i in range(n_receitas):
-    nome_receita = st.sidebar.text_input(f"Nome da receita {i+1}", key=f"nome_receita_{i}_{mes_selecionado}")
-    valor_receita = st.sidebar.number_input(f"Valor da receita {i+1} (R$)", min_value=0.0, step=100.0, key=f"valor_receita_{i}_{mes_selecionado}")
-    dados_mes_selecionado['Receitas'][nome_receita] = valor_receita
-
-# Despesas Fixas
-st.sidebar.subheader('Despesas Fixas')
-n_despesas_fixas = st.sidebar.number_input("Quantas despesas fixas você quer adicionar?", min_value=1, step=1, key=f"n_despesas_fixas_{mes_selecionado}")
-for i in range(n_despesas_fixas):
-    nome_despesa_fixa = st.sidebar.text_input(f"Nome da despesa fixa {i+1}", key=f"nome_despesa_fixa_{i}_{mes_selecionado}")
-    valor_despesa_fixa = st.sidebar.number_input(f"Valor da despesa fixa {i+1} (R$)", min_value=0.0, step=100.0, key=f"valor_despesa_fixa_{i}_{mes_selecionado}")
-    dados_mes_selecionado['Despesas Fixas'][nome_despesa_fixa] = valor_despesa_fixa
-
-# Despesas Variáveis
-st.sidebar.subheader('Despesas Variáveis')
-n_despesas_variaveis = st.sidebar.number_input("Quantas despesas variáveis você quer adicionar?", min_value=1, step=1, key=f"n_despesas_variaveis_{mes_selecionado}")
-for i in range(n_despesas_variaveis):
-    nome_despesa_variavel = st.sidebar.text_input(f"Nome da despesa variável {i+1}", key=f"nome_despesa_variavel_{i}_{mes_selecionado}")
-    valor_despesa_variavel = st.sidebar.number_input(f"Valor da despesa variável {i+1} (R$)", min_value=0.0, step=100.0, key=f"valor_despesa_variavel_{i}_{mes_selecionado}")
-    dados_mes_selecionado['Despesas Variáveis'][nome_despesa_variavel] = valor_despesa_variavel
-
-# Impostos
-st.sidebar.subheader('Impostos')
-n_impostos = st.sidebar.number_input("Quantos impostos você quer adicionar?", min_value=1, step=1, key=f"n_impostos_{mes_selecionado}")
-for i in range(n_impostos):
-    nome_imposto = st.sidebar.text_input(f"Nome do imposto {i+1}", key=f"nome_imposto_{i}_{mes_selecionado}")
-    valor_imposto = st.sidebar.number_input(f"Valor do imposto {i+1} (R$)", min_value=0.0, step=100.0, key=f"valor_imposto_{i}_{mes_selecionado}")
-    dados_mes_selecionado['Impostos'][nome_imposto] = valor_imposto
-
-# Investimentos
-st.sidebar.subheader('Investimentos')
-n_investimentos = st.sidebar.number_input("Quantos investimentos você quer adicionar?", min_value=1, step=1, key=f"n_investimentos_{mes_selecionado}")
-for i in range(n_investimentos):
-    nome_investimento = st.sidebar.text_input(f"Nome do investimento {i+1}", key=f"nome_investimento_{i}_{mes_selecionado}")
-    valor_investimento = st.sidebar.number_input(f"Valor do investimento {i+1} (R$)", min_value=0.0, step=100.0, key=f"valor_investimento_{i}_{mes_selecionado}")
-    dados_mes_selecionado['Investimentos'][nome_investimento] = valor_investimento
-
-# Recalcular o fluxo de caixa após as edições
-receitas_mes, despesas_mes, fluxo_caixa_mes = calcular_fluxo_caixa(dados_mes_selecionado)
-st.write(f"Fluxo de Caixa: R$ {fluxo_caixa_mes}")
-
-# Gráfico de Pizza (Porcentagem) para o mês selecionado
-st.subheader(f'Distribuição de Receitas e Despesas de {mes_selecionado}')
-dados_pie = pd.DataFrame({
-    "Categoria": ["Receitas", "Despesas Fixas", "Despesas Variáveis", "Impostos", "Investimentos"],
-    "Valor": [calcular_total_categoria(dados_mes_selecionado['Receitas']),
-              calcular_total_categoria(dados_mes_selecionado['Despesas Fixas']),
-              calcular_total_categoria(dados_mes_selecionado['Despesas Variáveis']),
-              calcular_total_categoria(dados_mes_selecionado['Impostos']),
-              calcular_total_categoria(dados_mes_selecionado['Investimentos'])]
-})
-fig_pizza = px.pie(dados_pie, names='Categoria', values='Valor', title=f'Distribuição de Receitas e Despesas em {mes_selecionado}')
-st.plotly_chart(fig_pizza)
-
-
-
+# Exibir os dados atualizados para cada mês
+st.subheader('Resumo dos Meses')
+for mes, dados in st.session_state.dados_por_mes.items():
+    st.write(f"{mes} - Receitas: R$ {dados['Receitas']}, Despesas: R$ {dados['Despesas']}, Investimentos: R$ {dados['Investimentos']}")
