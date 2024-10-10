@@ -16,9 +16,9 @@ def gerar_dados_exemplo():
     meses = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 
              'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro']
     dados = {mes: {
-        "Receitas": "0.0",  # Edição livre, texto por padrão
-        "Despesas": "0.0", 
-        "Investimentos": "0.0"
+        "Receitas": 0.0, 
+        "Despesas": 0.0, 
+        "Investimentos": 0.0
         } for mes in meses}
     return dados
 
@@ -26,57 +26,82 @@ def gerar_dados_exemplo():
 if 'dados_por_mes' not in st.session_state:
     st.session_state.dados_por_mes = gerar_dados_exemplo()
 
-# Função para exibir a seção de edição de valores diretamente nas caixas
-def exibir_caixas_edicao(mes, dados_mes):
-    st.subheader(f'{mes}')
-    
-    # Campos para edição manual (texto livre)
-    dados_mes['Receitas'] = st.text_area(f"Receitas de {mes}", value=dados_mes['Receitas'], key=f"receitas_{mes}")
-    dados_mes['Despesas'] = st.text_area(f"Despesas de {mes}", value=dados_mes['Despesas'], key=f"despesas_{mes}")
-    dados_mes['Investimentos'] = st.text_area(f"Investimentos de {mes}", value=dados_mes['Investimentos'], key=f"investimentos_{mes}")
-    
-    # Atualizar os dados no estado da sessão
-    st.session_state.dados_por_mes[mes] = dados_mes
+# Função para exibir o resumo de um mês
+def exibir_resumo_mes(mes, dados_mes):
+    st.markdown(f"### {mes} 2023")
+    st.write(f"Receitas: R$ {dados_mes['Receitas']:.2f}")
+    st.write(f"Despesas: R$ {dados_mes['Despesas']:.2f}")
+    st.write(f"Investimentos: R$ {dados_mes['Investimentos']:.2f}")
 
 # Função para calcular a distribuição em porcentagens
 def calcular_percentuais(dados_mes):
     try:
-        total = float(dados_mes['Receitas']) + float(dados_mes['Despesas']) + float(dados_mes['Investimentos'])
+        total = dados_mes['Receitas'] + dados_mes['Despesas'] + dados_mes['Investimentos']
         if total == 0:
             return [0, 0, 0]
-        percent_receitas = (float(dados_mes['Receitas']) / total) * 100
-        percent_despesas = (float(dados_mes['Despesas']) / total) * 100
-        percent_investimentos = (float(dados_mes['Investimentos']) / total) * 100
+        percent_receitas = (dados_mes['Receitas'] / total) * 100
+        percent_despesas = (dados_mes['Despesas'] / total) * 100
+        percent_investimentos = (dados_mes['Investimentos'] / total) * 100
         return [percent_receitas, percent_despesas, percent_investimentos]
     except:
         return [0, 0, 0]
 
+# Função para gerar o gráfico de pizza
+def gerar_grafico_pizza(mes):
+    dados_mes = st.session_state.dados_por_mes[mes]
+    percentuais = calcular_percentuais(dados_mes)
+    df_percent = pd.DataFrame({
+        'Categoria': ['Receitas', 'Despesas', 'Investimentos'],
+        'Percentual': percentuais
+    })
+    fig = px.pie(df_percent, values='Percentual', names='Categoria', title=f'Distribuição em {mes}')
+    st.plotly_chart(fig)
+
+# Função para gerar o gráfico anual de linha
+def gerar_grafico_anual():
+    resumo = {"Meses": [], "Receitas": [], "Despesas": []}
+    for mes, dados in st.session_state.dados_por_mes.items():
+        resumo['Meses'].append(mes)
+        resumo['Receitas'].append(dados['Receitas'])
+        resumo['Despesas'].append(dados['Despesas'])
+    
+    df_resumo = pd.DataFrame(resumo)
+    fig = px.line(df_resumo, x='Meses', y=['Receitas', 'Despesas'], title="Evolução Anual de Receitas e Despesas")
+    st.plotly_chart(fig)
+
 # Página inicial com as caixas dos meses
 st.title('Planejamento Financeiro - Meses do Ano')
 
-st.subheader('Clique em um mês para editar seus valores manualmente')
-
-# Exibir os meses em "caixas" ou botões para clicar
+# Exibir os meses em caixas de resumo sem edição
+st.subheader('Resumo dos Meses')
 col1, col2, col3 = st.columns(3)
 meses = list(st.session_state.dados_por_mes.keys())
 
 for i, mes in enumerate(meses):
     col = [col1, col2, col3][i % 3]  # Distribuir os meses entre as colunas
     with col:
-        with st.expander(mes):
-            exibir_caixas_edicao(mes, st.session_state.dados_por_mes[mes])
+        exibir_resumo_mes(mes, st.session_state.dados_por_mes[mes])
 
-# Gráfico de Pizza com porcentagem das receitas, despesas e investimentos para o mês selecionado
-st.subheader('Distribuição das Receitas, Despesas e Investimentos (%)')
+# Seção de Receita e Despesa (caixas)
+st.subheader('Receitas por Mês')
+col1, col2, col3 = st.columns(3)
+for i, mes in enumerate(meses):
+    col = [col1, col2, col3][i % 3]
+    with col:
+        st.write(f"{mes} - R$ {st.session_state.dados_por_mes[mes]['Receitas']:.2f}")
 
-# Somente calcular se houver entradas válidas
-for mes, dados in st.session_state.dados_por_mes.items():
-    percentuais = calcular_percentuais(dados)
-    if sum(percentuais) > 0:  # Apenas mostra o gráfico se houver valores
-        df_percent = pd.DataFrame({
-            'Categoria': ['Receitas', 'Despesas', 'Investimentos'],
-            'Percentual': percentuais
-        })
-        fig = px.pie(df_percent, values='Percentual', names='Categoria', title=f'Distribuição em {mes}')
-        st.plotly_chart(fig)
+st.subheader('Despesas por Mês')
+col1, col2, col3 = st.columns(3)
+for i, mes in enumerate(meses):
+    col = [col1, col2, col3][i % 3]
+    with col:
+        st.write(f"{mes} - R$ {st.session_state.dados_por_mes[mes]['Despesas']:.2f}")
 
+# Gráfico de Pizza
+st.subheader('Gráfico de Pizza (Selecione o Mês)')
+mes_selecionado = st.selectbox("Selecione o mês", meses)
+gerar_grafico_pizza(mes_selecionado)
+
+# Gráfico Anual de Linha
+st.subheader('Gráfico Anual de Linha')
+gerar_grafico_anual()
