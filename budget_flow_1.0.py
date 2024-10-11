@@ -42,31 +42,25 @@ def exibir_resumo_mes(mes, dados_mes):
     </div>
     """, unsafe_allow_html=True)
 
-# Função para calcular a distribuição em porcentagens
-def calcular_percentuais(dados_mes):
-    total_receitas = sum(dados_mes['Receitas'].values())
-    total_despesas = sum(dados_mes['Despesas'].values())
-    
-    try:
-        total = total_receitas + total_despesas
-        if total == 0:
-            return [0, 0]
-        percent_receitas = (total_receitas / total) * 100
-        percent_despesas = (total_despesas / total) * 100
-        return [percent_receitas, percent_despesas]
-    except:
-        return [0, 0]
-
-# Função para gerar o gráfico de pizza
+# Função para gerar o gráfico de pizza baseado nos nomes das receitas e despesas
 def gerar_grafico_pizza(mes):
     dados_mes = st.session_state.dados_por_mes[mes]
-    percentuais = calcular_percentuais(dados_mes)
-    df_percent = pd.DataFrame({
-        'Categoria': ['Receitas', 'Despesas'],
-        'Percentual': percentuais
+    
+    # Combinar receitas e despesas em um único dataframe
+    categorias = list(dados_mes['Receitas'].keys()) + list(dados_mes['Despesas'].keys())
+    valores = list(dados_mes['Receitas'].values()) + list(dados_mes['Despesas'].values())
+    
+    df_pizza = pd.DataFrame({
+        'Categoria': categorias,
+        'Valor': valores
     })
-    fig = px.pie(df_percent, values='Percentual', names='Categoria', title=f'Distribuição em {mes}')
-    st.plotly_chart(fig)
+    
+    # Verificar se há dados para exibir
+    if not df_pizza.empty and df_pizza['Valor'].sum() > 0:
+        fig = px.pie(df_pizza, values='Valor', names='Categoria', title=f'Distribuição de Receitas e Despesas em {mes}')
+        st.plotly_chart(fig)
+    else:
+        st.warning(f"Sem dados de receitas e despesas para exibir no mês {mes}.")
 
 # Função para gerar o gráfico anual de linha
 def gerar_grafico_anual():
@@ -162,11 +156,12 @@ with st.expander(f"Lançamento de {mes_selecionado}"):
 
 # Gráfico de Pizza
 st.markdown('---')
-st.subheader('Gráfico de Pizza (Selecione o Mês)')
+st.subheader('Gráfico de Pizza (Distribuído por Receitas e Despesas)')
 gerar_grafico_pizza(mes_selecionado)
 
 # Gráfico Anual de Linha
 st.markdown('---')
 st.subheader('Gráfico Anual de Linha')
 gerar_grafico_anual()
+
 
