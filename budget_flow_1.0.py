@@ -47,6 +47,79 @@ def gerar_grafico_pizza(mes):
     dados_mes = st.session_state.dados_por_mes[mes]
     
     # Combinar receitas e despesas em um único dataframe
+    categorias = list(dados_mes['Receitas'].keyimport streamlit as st
+import pandas as pd
+import plotly.express as px
+
+# Função para gerar dados de exemplo para cada mês
+def gerar_dados_exemplo():
+    meses = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 
+             'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro']
+    dados = {mes: {
+        "Receitas": {},  # Agora as receitas são um dicionário com nome e valor
+        "Despesas": {}   # Agora as despesas são um dicionário com nome e valor
+        } for mes in meses}
+    return dados
+
+# Inicializar os dados no session_state se ainda não estiverem definidos
+if 'dados_por_mes' not in st.session_state:
+    st.session_state.dados_por_mes = gerar_dados_exemplo()
+
+# Função para processar upload de arquivo CSV
+def processar_upload_csv(arquivo):
+    if arquivo is not None:
+        try:
+            # Processar CSV
+            dados_csv = pd.read_csv(arquivo)
+            # Verificar se o CSV tem as colunas corretas
+            if set(['Mes', 'Nome', 'Tipo', 'Valor']).issubset(dados_csv.columns):
+                for _, linha in dados_csv.iterrows():
+                    mes = linha['Mes']
+                    nome = linha['Nome']
+                    tipo = linha['Tipo']
+                    valor = linha['Valor']
+                    
+                    # Atualizar os dados no session_state com base no tipo (Receita ou Despesa)
+                    if tipo == 'Receita':
+                        st.session_state.dados_por_mes[mes]['Receitas'][nome] = valor
+                    elif tipo == 'Despesa':
+                        st.session_state.dados_por_mes[mes]['Despesas'][nome] = valor
+                st.success("Dados do CSV carregados com sucesso!")
+            else:
+                st.error("O arquivo CSV deve conter as colunas: Mes, Nome, Tipo, Valor")
+        except Exception as e:
+            st.error(f"Ocorreu um erro ao processar o arquivo: {e}")
+
+# Sidebar para upload de CSV
+st.sidebar.header('Upload de Arquivo CSV')
+arquivo_csv = st.sidebar.file_uploader("Faça o upload do arquivo CSV", type=['csv'])
+
+# Processar o upload do CSV
+if arquivo_csv is not None:
+    processar_upload_csv(arquivo_csv)
+
+# Função para exibir o resumo de um mês com estilo futurístico
+def exibir_resumo_mes(mes, dados_mes):
+    total_receitas = sum(dados_mes['Receitas'].values())
+    total_despesas = sum(dados_mes['Despesas'].values())
+    
+    # Verificar se as despesas estão acima das receitas e alertar
+    if total_despesas > total_receitas:
+        st.error(f"Atenção! As despesas estão acima das receitas em {mes}.")
+    
+    st.markdown(f"""
+    <div style='background-color:#1e1e2e; padding:20px; border-radius:15px; margin-bottom:10px; color:#fff;'>
+        <h4 style='text-align:center;'>{mes} 2023</h4>
+        <p><b>Total de Receitas:</b> R$ {total_receitas:.2f}</p>
+        <p><b>Total de Despesas:</b> R$ {total_despesas:.2f}</p>
+    </div>
+    """, unsafe_allow_html=True)
+
+# Função para gerar o gráfico de pizza baseado nos nomes das receitas e despesas
+def gerar_grafico_pizza(mes):
+    dados_mes = st.session_state.dados_por_mes[mes]
+    
+    # Combinar receitas e despesas em um único dataframe
     categorias = list(dados_mes['Receitas'].keys()) + list(dados_mes['Despesas'].keys())
     valores = list(dados_mes['Receitas'].values()) + list(dados_mes['Despesas'].values())
     
@@ -78,34 +151,6 @@ def gerar_grafico_anual():
 def exportar_csv():
     df = pd.DataFrame(st.session_state.dados_por_mes).T  # Transpor para ficar mais fácil de ler
     return df.to_csv().encode('utf-8')
-
-# Função para processar upload de arquivo CSV ou Excel
-def processar_upload(arquivo):
-    if arquivo is not None:
-        try:
-            # Processar CSV
-            if arquivo.name.endswith('.csv'):
-                dados = pd.read_csv(arquivo)
-            # Processar Excel
-            elif arquivo.name.endswith('.xlsx'):
-                dados = pd.read_excel(arquivo)
-            else:
-                st.error('Formato de arquivo não suportado. Faça o upload de CSV ou Excel.')
-                return None
-            return dados
-        except Exception as e:
-            st.error(f"Ocorreu um erro ao processar o arquivo: {e}")
-            return None
-    return None
-
-# Sidebar para upload de CSV ou Excel
-st.sidebar.header('Upload de Arquivo')
-arquivo = st.sidebar.file_uploader("Faça o upload do arquivo CSV ou Excel", type=['csv', 'xlsx'])
-dados_upload = processar_upload(arquivo)
-
-if dados_upload is not None:
-    st.sidebar.write('Dados do arquivo:')
-    st.sidebar.write(dados_upload)
 
 # Sidebar para download de CSV
 st.sidebar.header('Download dos Dados')
@@ -163,5 +208,6 @@ gerar_grafico_pizza(mes_selecionado)
 st.markdown('---')
 st.subheader('Gráfico Anual de Linha')
 gerar_grafico_anual()
+
 
 
