@@ -135,10 +135,14 @@ for i, mes in enumerate(meses):
     with col:
         exibir_resumo_mes(mes, st.session_state.dados_por_mes[mes])
 
-# Caixa expansível para editar dados do mês selecionado
+# Seção de edição de Receitas e Despesas com caixa expansível após seleção do mês
+st.markdown('---')
+st.markdown('<h2 style="text-align:center; color:#42b883;">Editar Receitas e Despesas</h2>', unsafe_allow_html=True)
+
 mes_selecionado = st.selectbox("Selecione o mês para editar", meses)
 
-with st.expander(f"Lançamento de {mes_selecionado}"):  # Texto alterado conforme solicitado
+# Caixa expansível para editar dados do mês selecionado
+with st.expander(f"Editar {mes_selecionado}"):
     # Mostrar receitas carregadas do CSV ou manualmente adicionadas
     st.write(f"Receitas em {mes_selecionado}")
     for nome_receita, valor_receita in st.session_state.dados_por_mes[mes_selecionado]['Receitas'].items():
