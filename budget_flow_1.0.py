@@ -25,46 +25,6 @@ def gerar_dados_exemplo():
 if 'dados_por_mes' not in st.session_state:
     st.session_state.dados_por_mes = gerar_dados_exemplo()
 
-# Função para exibir o resumo de um mês com estilo futurístico
-def exibir_resumo_mes(mes, dados_mes):
-    total_receitas = sum(dados_mes['Receitas'].values())
-    total_despesas = sum(dados_mes['Despesas'].values())
-    
-    # Verificar se as despesas estão acima das receitas e alertar
-    if total_despesas > total_receitas:
-        st.error(f"Atenção! As despesas estão acima das receitas em {mes}.")
-    
-    st.markdown(f"""
-    <div style='background-color:#1e1e2e; padding:20px; border-radius:15px; margin-bottom:10px; color:#fff;'>
-        <h4 style='text-align:center;'>{mes} 2023</h4>
-        <p><b>Total de Receitas:</b> R$ {total_receitas:.2f}</p>
-        <p><b>Total de Despesas:</b> R$ {total_despesas:.2f}</p>
-    </div>
-    """, unsafe_allow_html=True)
-
-# Função para gerar o gráfico de pizza baseado nos nomes das receitas e despesas
-def gerar_grafico_pizza(mes):
-    dados_mes = st.session_state.dados_por_mes[mes]
-    
-    # Combinar receitas e despesas em um único dataframe
-    categorias = list(dados_mes['Receitas'].keyimport streamlit as st
-import pandas as pd
-import plotly.express as px
-
-# Função para gerar dados de exemplo para cada mês
-def gerar_dados_exemplo():
-    meses = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 
-             'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro']
-    dados = {mes: {
-        "Receitas": {},  # Agora as receitas são um dicionário com nome e valor
-        "Despesas": {}   # Agora as despesas são um dicionário com nome e valor
-        } for mes in meses}
-    return dados
-
-# Inicializar os dados no session_state se ainda não estiverem definidos
-if 'dados_por_mes' not in st.session_state:
-    st.session_state.dados_por_mes = gerar_dados_exemplo()
-
 # Função para processar upload de arquivo CSV
 def processar_upload_csv(arquivo):
     if arquivo is not None:
