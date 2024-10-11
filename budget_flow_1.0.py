@@ -16,10 +16,8 @@ def gerar_dados_exemplo():
     meses = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 
              'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro']
     dados = {mes: {
-        "Receitas": 0.0, 
-        "Despesas": 0.0, 
-        "Investimentos": 0.0,
-        "Orcamento Planejado": 0.0
+        "Receitas": {},  # Agora as receitas são um dicionário com nome e valor
+        "Despesas": {}   # Agora as despesas são um dicionário com nome e valor
         } for mes in meses}
     return dados
 
@@ -29,59 +27,42 @@ if 'dados_por_mes' not in st.session_state:
 
 # Função para exibir o resumo de um mês com estilo futurístico
 def exibir_resumo_mes(mes, dados_mes):
-    receitas = dados_mes['Receitas']
-    despesas = dados_mes['Despesas']
-    investimento = dados_mes['Investimentos']
-    orcamento_planejado = dados_mes['Orcamento Planejado']
+    total_receitas = sum(dados_mes['Receitas'].values())
+    total_despesas = sum(dados_mes['Despesas'].values())
     
     # Verificar se as despesas estão acima das receitas e alertar
-    if despesas > receitas:
+    if total_despesas > total_receitas:
         st.error(f"Atenção! As despesas estão acima das receitas em {mes}.")
-    elif despesas > orcamento_planejado:
-        st.warning(f"Atenção! As despesas ultrapassaram o orçamento planejado para {mes}.")
     
     st.markdown(f"""
     <div style='background-color:#1e1e2e; padding:20px; border-radius:15px; margin-bottom:10px; color:#fff;'>
         <h4 style='text-align:center;'>{mes} 2023</h4>
-        <p><b>Receitas:</b> R$ {receitas:.2f}</p>
-        <p><b>Despesas:</b> R$ {despesas:.2f}</p>
-        <p><b>Investimentos:</b> R$ {investimento:.2f}</p>
-        <p><b>Orçamento Planejado:</b> R$ {orcamento_planejado:.2f}</p>
+        <p><b>Total de Receitas:</b> R$ {total_receitas:.2f}</p>
+        <p><b>Total de Despesas:</b> R$ {total_despesas:.2f}</p>
     </div>
     """, unsafe_allow_html=True)
 
 # Função para calcular a distribuição em porcentagens
 def calcular_percentuais(dados_mes):
+    total_receitas = sum(dados_mes['Receitas'].values())
+    total_despesas = sum(dados_mes['Despesas'].values())
+    
     try:
-        total = dados_mes['Receitas'] + dados_mes['Despesas'] + dados_mes['Investimentos']
+        total = total_receitas + total_despesas
         if total == 0:
-            return [0, 0, 0]
-        percent_receitas = (dados_mes['Receitas'] / total) * 100
-        percent_despesas = (dados_mes['Despesas'] / total) * 100
-        percent_investimentos = (dados_mes['Investimentos'] / total) * 100
-        return [percent_receitas, percent_despesas, percent_investimentos]
+            return [0, 0]
+        percent_receitas = (total_receitas / total) * 100
+        percent_despesas = (total_despesas / total) * 100
+        return [percent_receitas, percent_despesas]
     except:
-        return [0, 0, 0]
-
-# Função para gerar recomendações com base no controle financeiro
-def gerar_recomendacoes(mes, dados_mes):
-    receitas = dados_mes['Receitas']
-    despesas = dados_mes['Despesas']
-    investimento = dados_mes['Investimentos']
-    orcamento_planejado = dados_mes['Orcamento Planejado']
-
-    if despesas > receitas:
-        st.write(f"**Recomendação para {mes}:** As despesas estão acima das receitas. Tente reduzir suas despesas para equilibrar seu orçamento.")
-    elif despesas > orcamento_planejado:
-        excesso = despesas - orcamento_planejado
-        st.write(f"**Recomendação para {mes}:** As despesas ultrapassaram o orçamento planejado por R$ {excesso:.2f}. Tente ajustar seus custos para manter o controle financeiro.")
+        return [0, 0]
 
 # Função para gerar o gráfico de pizza
 def gerar_grafico_pizza(mes):
     dados_mes = st.session_state.dados_por_mes[mes]
     percentuais = calcular_percentuais(dados_mes)
     df_percent = pd.DataFrame({
-        'Categoria': ['Receitas', 'Despesas', 'Investimentos'],
+        'Categoria': ['Receitas', 'Despesas'],
         'Percentual': percentuais
     })
     fig = px.pie(df_percent, values='Percentual', names='Categoria', title=f'Distribuição em {mes}')
@@ -92,8 +73,8 @@ def gerar_grafico_anual():
     resumo = {"Meses": [], "Receitas": [], "Despesas": []}
     for mes, dados in st.session_state.dados_por_mes.items():
         resumo['Meses'].append(mes)
-        resumo['Receitas'].append(dados['Receitas'])
-        resumo['Despesas'].append(dados['Despesas'])
+        resumo['Receitas'].append(sum(dados['Receitas'].values()))
+        resumo['Despesas'].append(sum(dados['Despesas'].values()))
     
     df_resumo = pd.DataFrame(resumo)
     fig = px.line(df_resumo, x='Meses', y=['Receitas', 'Despesas'], title="Evolução Anual de Receitas e Despesas")
@@ -164,16 +145,20 @@ st.markdown('<h2 style="text-align:center; color:#42b883;">Editar Receitas e Des
 mes_selecionado = st.selectbox("Selecione o mês para editar", meses)
 
 # Caixa expansível para editar dados do mês selecionado
-with st.expander(f"Editar {mes_selecionado}"):
-    st.session_state.dados_por_mes[mes_selecionado]['Receitas'] = st.number_input(f"Receitas em {mes_selecionado}", min_value=0.0, step=100.0, value=st.session_state.dados_por_mes[mes_selecionado]['Receitas'])
-    st.session_state.dados_por_mes[mes_selecionado]['Despesas'] = st.number_input(f"Despesas em {mes_selecionado}", min_value=0.0, step=100.0, value=st.session_state.dados_por_mes[mes_selecionado]['Despesas'])
-    st.session_state.dados_por_mes[mes_selecionado]['Investimentos'] = st.number_input(f"Investimentos em {mes_selecionado}", min_value=0.0, step=100.0, value=st.session_state.dados_por_mes[mes_selecionado]['Investimentos'])
-    st.session_state.dados_por_mes[mes_selecionado]['Orcamento Planejado'] = st.number_input(f"Orçamento Planejado para {mes_selecionado}", min_value=0.0, step=100.0, value=st.session_state.dados_por_mes[mes_selecionado]['Orcamento Planejado'])
+with st.expander(f"Lançamento de {mes_selecionado}"):
+    st.write(f"Receitas em {mes_selecionado}")
+    n_receitas = st.number_input("Quantas receitas você quer adicionar?", min_value=1, step=1, key=f"n_receitas_{mes_selecionado}")
+    for i in range(n_receitas):
+        nome_receita = st.text_input(f"Nome da receita {i+1}", key=f"nome_receita_{i}_{mes_selecionado}")
+        valor_receita = st.number_input(f"Valor da receita {i+1} (R$)", min_value=0.0, step=100.0, key=f"valor_receita_{i}_{mes_selecionado}")
+        st.session_state.dados_por_mes[mes_selecionado]['Receitas'][nome_receita] = valor_receita
 
-# Mostrar recomendações após edição
-st.markdown('---')
-st.markdown(f"### Recomendações para {mes_selecionado}")
-gerar_recomendacoes(mes_selecionado, st.session_state.dados_por_mes[mes_selecionado])
+    st.write(f"Despesas em {mes_selecionado}")
+    n_despesas = st.number_input("Quantas despesas você quer adicionar?", min_value=1, step=1, key=f"n_despesas_{mes_selecionado}")
+    for i in range(n_despesas):
+        nome_despesa = st.text_input(f"Nome da despesa {i+1}", key=f"nome_despesa_{i}_{mes_selecionado}")
+        valor_despesa = st.number_input(f"Valor da despesa {i+1} (R$)", min_value=0.0, step=100.0, key=f"valor_despesa_{i}_{mes_selecionado}")
+        st.session_state.dados_por_mes[mes_selecionado]['Despesas'][nome_despesa] = valor_despesa
 
 # Gráfico de Pizza
 st.markdown('---')
