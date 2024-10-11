@@ -135,6 +135,9 @@ for i, mes in enumerate(meses):
     with col:
         exibir_resumo_mes(mes, st.session_state.dados_por_mes[mes])
 
+# Seção de edição de Receitas e Despesas com caixa expansível após seleção do mês
+mes_selecionado = st.selectbox("Selecione o mês para editar", meses)  # Definir mes_selecionado antes de ser utilizado
+
 # Caixa expansível para editar dados do mês selecionado
 with st.expander(f"Lançamento de {mes_selecionado}"):  # Texto alterado conforme solicitado
     # Mostrar receitas carregadas do CSV ou manualmente adicionadas
@@ -172,6 +175,7 @@ gerar_grafico_pizza(mes_selecionado)
 st.markdown('---')
 st.subheader('Gráfico Anual de Linha')
 gerar_grafico_anual()
+
 
 
 
