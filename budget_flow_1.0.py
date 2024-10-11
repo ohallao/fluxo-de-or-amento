@@ -16,39 +16,6 @@ def gerar_dados_exemplo():
 if 'dados_por_mes' not in st.session_state:
     st.session_state.dados_por_mes = gerar_dados_exemplo()
 
-# Função para processar upload de arquivo CSV
-def processar_upload_csv(arquivo):
-    if arquivo is not None:
-        try:
-            # Processar CSV
-            dados_csv = pd.read_csv(arquivo)
-            # Verificar se o CSV tem as colunas corretas
-            if set(['Mes', 'Nome', 'Tipo', 'Valor']).issubset(dados_csv.columns):
-                for _, linha in dados_csv.iterrows():
-                    mes = linha['Mes']
-                    nome = linha['Nome']
-                    tipo = linha['Tipo']
-                    valor = linha['Valor']
-                    
-                    # Atualizar os dados no session_state com base no tipo (Receita ou Despesa)
-                    if tipo == 'Receita':
-                        st.session_state.dados_por_mes[mes]['Receitas'][nome] = valor
-                    elif tipo == 'Despesa':
-                        st.session_state.dados_por_mes[mes]['Despesas'][nome] = valor
-                st.success("Dados do CSV carregados com sucesso!")
-            else:
-                st.error("O arquivo CSV deve conter as colunas: Mes, Nome, Tipo, Valor")
-        except Exception as e:
-            st.error(f"Ocorreu um erro ao processar o arquivo: {e}")
-
-# Sidebar para upload de CSV
-st.sidebar.header('Upload de Arquivo CSV')
-arquivo_csv = st.sidebar.file_uploader("Faça o upload do arquivo CSV", type=['csv'])
-
-# Processar o upload do CSV
-if arquivo_csv is not None:
-    processar_upload_csv(arquivo_csv)
-
 # Função para exibir o resumo de um mês com estilo futurístico
 def exibir_resumo_mes(mes, dados_mes):
     total_receitas = sum(dados_mes['Receitas'].values())
@@ -98,17 +65,38 @@ def gerar_grafico_anual():
     fig = px.line(df_resumo, x='Meses', y=['Receitas', 'Despesas'], title="Evolução Anual de Receitas e Despesas")
     st.plotly_chart(fig)
 
-# Função para exportar os dados para CSV no formato adequado
+# Função para exportar os dados para CSV
 def exportar_csv():
-    linhas = []
-    for mes, dados in st.session_state.dados_por_mes.items():
-        for nome_receita, valor_receita in dados['Receitas'].items():
-            linhas.append({"Mes": mes, "Nome": nome_receita, "Tipo": "Receita", "Valor": valor_receita})
-        for nome_despesa, valor_despesa in dados['Despesas'].items():
-            linhas.append({"Mes": mes, "Nome": nome_despesa, "Tipo": "Despesa", "Valor": valor_despesa})
-    
-    df = pd.DataFrame(linhas)
-    return df.to_csv(index=False).encode('utf-8')
+    df = pd.DataFrame(st.session_state.dados_por_mes).T  # Transpor para ficar mais fácil de ler
+    return df.to_csv().encode('utf-8')
+
+# Função para processar upload de arquivo CSV ou Excel
+def processar_upload(arquivo):
+    if arquivo is not None:
+        try:
+            # Processar CSV
+            if arquivo.name.endswith('.csv'):
+                dados = pd.read_csv(arquivo)
+            # Processar Excel
+            elif arquivo.name.endswith('.xlsx'):
+                dados = pd.read_excel(arquivo)
+            else:
+                st.error('Formato de arquivo não suportado. Faça o upload de CSV ou Excel.')
+                return None
+            return dados
+        except Exception as e:
+            st.error(f"Ocorreu um erro ao processar o arquivo: {e}")
+            return None
+    return None
+
+# Sidebar para upload de CSV ou Excel
+st.sidebar.header('Upload de Arquivo')
+arquivo = st.sidebar.file_uploader("Faça o upload do arquivo CSV ou Excel", type=['csv', 'xlsx'])
+dados_upload = processar_upload(arquivo)
+
+if dados_upload is not None:
+    st.sidebar.write('Dados do arquivo:')
+    st.sidebar.write(dados_upload)
 
 # Sidebar para download de CSV
 st.sidebar.header('Download dos Dados')
@@ -143,30 +131,18 @@ mes_selecionado = st.selectbox("Selecione o mês para editar", meses)
 
 # Caixa expansível para editar dados do mês selecionado
 with st.expander(f"Editar {mes_selecionado}"):
-    # Mostrar receitas carregadas do CSV ou manualmente adicionadas
     st.write(f"Receitas em {mes_selecionado}")
-    for nome_receita, valor_receita in st.session_state.dados_por_mes[mes_selecionado]['Receitas'].items():
-        st.text_input(f"Nome da receita", value=nome_receita, key=f"nome_receita_{nome_receita}_{mes_selecionado}")
-        st.number_input(f"Valor da receita (R$)", min_value=0.0, step=100.0, value=valor_receita, key=f"valor_receita_{nome_receita}_{mes_selecionado}")
-    
-    # Mostrar despesas carregadas do CSV ou manualmente adicionadas
-    st.write(f"Despesas em {mes_selecionado}")
-    for nome_despesa, valor_despesa in st.session_state.dados_por_mes[mes_selecionado]['Despesas'].items():
-        st.text_input(f"Nome da despesa", value=nome_despesa, key=f"nome_despesa_{nome_despesa}_{mes_selecionado}")
-        st.number_input(f"Valor da despesa (R$)", min_value=0.0, step=100.0, value=valor_despesa, key=f"valor_despesa_{nome_despesa}_{mes_selecionado}")
-
-    # Permitir adicionar mais receitas ou despesas manualmente
-    st.write("Adicionar novas receitas ou despesas")
-    n_receitas = st.number_input("Quantas receitas você quer adicionar?", min_value=0, step=1, key=f"n_receitas_{mes_selecionado}")
+    n_receitas = st.number_input("Quantas receitas você quer adicionar?", min_value=1, step=1, key=f"n_receitas_{mes_selecionado}")
     for i in range(n_receitas):
-        nome_receita = st.text_input(f"Nome da nova receita {i+1}", key=f"nova_nome_receita_{i}_{mes_selecionado}")
-        valor_receita = st.number_input(f"Valor da nova receita {i+1} (R$)", min_value=0.0, step=100.0, key=f"nova_valor_receita_{i}_{mes_selecionado}")
+        nome_receita = st.text_input(f"Nome da receita {i+1}", key=f"nome_receita_{i}_{mes_selecionado}")
+        valor_receita = st.number_input(f"Valor da receita {i+1} (R$)", min_value=0.0, step=100.0, key=f"valor_receita_{i}_{mes_selecionado}")
         st.session_state.dados_por_mes[mes_selecionado]['Receitas'][nome_receita] = valor_receita
 
-    n_despesas = st.number_input("Quantas despesas você quer adicionar?", min_value=0, step=1, key=f"n_despesas_{mes_selecionado}")
+    st.write(f"Despesas em {mes_selecionado}")
+    n_despesas = st.number_input("Quantas despesas você quer adicionar?", min_value=1, step=1, key=f"n_despesas_{mes_selecionado}")
     for i in range(n_despesas):
-        nome_despesa = st.text_input(f"Nome da nova despesa {i+1}", key=f"nova_nome_despesa_{i}_{mes_selecionado}")
-        valor_despesa = st.number_input(f"Valor da nova despesa {i+1} (R$)", min_value=0.0, step=100.0, key=f"nova_valor_despesa_{i}_{mes_selecionado}")
+        nome_despesa = st.text_input(f"Nome da despesa {i+1}", key=f"nome_despesa_{i}_{mes_selecionado}")
+        valor_despesa = st.number_input(f"Valor da despesa {i+1} (R$)", min_value=0.0, step=100.0, key=f"valor_despesa_{i}_{mes_selecionado}")
         st.session_state.dados_por_mes[mes_selecionado]['Despesas'][nome_despesa] = valor_despesa
 
 # Gráfico de Pizza
@@ -178,3 +154,4 @@ gerar_grafico_pizza(mes_selecionado)
 st.markdown('---')
 st.subheader('Gráfico Anual de Linha')
 gerar_grafico_anual()
+
