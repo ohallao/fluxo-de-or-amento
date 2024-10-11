@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 import streamlit as st
 import pandas as pd
 import plotly.express as px
@@ -136,26 +135,32 @@ for i, mes in enumerate(meses):
     with col:
         exibir_resumo_mes(mes, st.session_state.dados_por_mes[mes])
 
-# Seção de edição de Receitas e Despesas com caixa expansível após seleção do mês
-st.markdown('---')
-st.markdown('<h2 style="text-align:center; color:#42b883;">Editar Receitas e Despesas</h2>', unsafe_allow_html=True)
-
-mes_selecionado = st.selectbox("Selecione o mês para editar", meses)
-
 # Caixa expansível para editar dados do mês selecionado
-with st.expander(f"Lançamento de {mes_selecionado}"):
+with st.expander(f"Lançamento de {mes_selecionado}"):  # Texto alterado conforme solicitado
+    # Mostrar receitas carregadas do CSV ou manualmente adicionadas
     st.write(f"Receitas em {mes_selecionado}")
-    n_receitas = st.number_input("Quantas receitas você quer adicionar?", min_value=1, step=1, key=f"n_receitas_{mes_selecionado}")
+    for nome_receita, valor_receita in st.session_state.dados_por_mes[mes_selecionado]['Receitas'].items():
+        st.text_input(f"Nome da receita", value=nome_receita, key=f"nome_receita_{nome_receita}_{mes_selecionado}")
+        st.number_input(f"Valor da receita (R$)", min_value=0.0, step=100.0, value=valor_receita, key=f"valor_receita_{nome_receita}_{mes_selecionado}")
+    
+    # Mostrar despesas carregadas do CSV ou manualmente adicionadas
+    st.write(f"Despesas em {mes_selecionado}")
+    for nome_despesa, valor_despesa in st.session_state.dados_por_mes[mes_selecionado]['Despesas'].items():
+        st.text_input(f"Nome da despesa", value=nome_despesa, key=f"nome_despesa_{nome_despesa}_{mes_selecionado}")
+        st.number_input(f"Valor da despesa (R$)", min_value=0.0, step=100.0, value=valor_despesa, key=f"valor_despesa_{nome_despesa}_{mes_selecionado}")
+
+    # Permitir adicionar mais receitas ou despesas manualmente
+    st.write("Adicionar novas receitas ou despesas")
+    n_receitas = st.number_input("Quantas receitas você quer adicionar?", min_value=0, step=1, key=f"n_receitas_{mes_selecionado}")
     for i in range(n_receitas):
-        nome_receita = st.text_input(f"Nome da receita {i+1}", key=f"nome_receita_{i}_{mes_selecionado}")
-        valor_receita = st.number_input(f"Valor da receita {i+1} (R$)", min_value=0.0, step=100.0, key=f"valor_receita_{i}_{mes_selecionado}")
+        nome_receita = st.text_input(f"Nome da nova receita {i+1}", key=f"nova_nome_receita_{i}_{mes_selecionado}")
+        valor_receita = st.number_input(f"Valor da nova receita {i+1} (R$)", min_value=0.0, step=100.0, key=f"nova_valor_receita_{i}_{mes_selecionado}")
         st.session_state.dados_por_mes[mes_selecionado]['Receitas'][nome_receita] = valor_receita
 
-    st.write(f"Despesas em {mes_selecionado}")
-    n_despesas = st.number_input("Quantas despesas você quer adicionar?", min_value=1, step=1, key=f"n_despesas_{mes_selecionado}")
+    n_despesas = st.number_input("Quantas despesas você quer adicionar?", min_value=0, step=1, key=f"n_despesas_{mes_selecionado}")
     for i in range(n_despesas):
-        nome_despesa = st.text_input(f"Nome da despesa {i+1}", key=f"nome_despesa_{i}_{mes_selecionado}")
-        valor_despesa = st.number_input(f"Valor da despesa {i+1} (R$)", min_value=0.0, step=100.0, key=f"valor_despesa_{i}_{mes_selecionado}")
+        nome_despesa = st.text_input(f"Nome da nova despesa {i+1}", key=f"nova_nome_despesa_{i}_{mes_selecionado}")
+        valor_despesa = st.number_input(f"Valor da nova despesa {i+1} (R$)", min_value=0.0, step=100.0, key=f"nova_valor_despesa_{i}_{mes_selecionado}")
         st.session_state.dados_por_mes[mes_selecionado]['Despesas'][nome_despesa] = valor_despesa
 
 # Gráfico de Pizza
